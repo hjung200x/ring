@@ -1,0 +1,422 @@
+﻿openapi: 3.1.0
+info:
+  title: ring API
+  version: 0.1.0
+  description: |
+    V1 API for authenticated notice matching and notification browsing.
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/auth/login:
+    post:
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '204':
+          description: Logged in and session cookie set
+        '401':
+          description: Invalid credentials
+  /api/auth/logout:
+    post:
+      summary: Logout current session
+      responses:
+        '204':
+          description: Session cleared
+  /api/me:
+    get:
+      summary: Get current authenticated user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '401':
+          description: Unauthorized
+  /api/profiles:
+    get:
+      summary: List current user profiles
+      responses:
+        '200':
+          description: Profile list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileSummary'
+    post:
+      summary: Create profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpsertRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileDetail'
+  /api/profiles/{profileId}:
+    get:
+      summary: Get profile detail
+      parameters:
+        - $ref: '#/components/parameters/ProfileId'
+      responses:
+        '200':
+          description: Profile detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileDetail'
+        '404':
+          description: Not found
+    patch:
+      summary: Update profile
+      parameters:
+        - $ref: '#/components/parameters/ProfileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpsertRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileDetail'
+  /api/profiles/{profileId}/examples/manual-text:
+    post:
+      summary: Add manual text example
+      parameters:
+        - $ref: '#/components/parameters/ProfileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualExampleRequest'
+      responses:
+        '201':
+          description: Example created
+  /api/profiles/{profileId}/examples/from-announcement:
+    post:
+      summary: Add example from an existing announcement
+      parameters:
+        - $ref: '#/components/parameters/ProfileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementExampleRequest'
+      responses:
+        '201':
+          description: Example created
+  /api/profiles/{profileId}/examples/upload:
+    post:
+      summary: Upload notice file as example
+      parameters:
+        - $ref: '#/components/parameters/ProfileId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [title, file]
+              properties:
+                title:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Example created
+  /api/profiles/{profileId}/examples/{exampleId}:
+    delete:
+      summary: Delete example
+      parameters:
+        - $ref: '#/components/parameters/ProfileId'
+        - $ref: '#/components/parameters/ExampleId'
+      responses:
+        '204':
+          description: Deleted
+  /api/notifications:
+    get:
+      summary: List notifications for current user
+      parameters:
+        - in: query
+          name: isRead
+          schema:
+            type: boolean
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Notification list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+  /api/notifications/{notificationId}:
+    get:
+      summary: Get notification detail
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '200':
+          description: Notification detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationDetail'
+        '404':
+          description: Not found
+  /api/notifications/{notificationId}/read:
+    post:
+      summary: Mark notification as read
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '204':
+          description: Read state updated
+  /internal/jobs/collect-announcements:
+    post:
+      summary: Trigger KEIT collection job
+      responses:
+        '202':
+          description: Job accepted
+  /internal/jobs/process-documents:
+    post:
+      summary: Trigger document processing job
+      responses:
+        '202':
+          description: Job accepted
+  /internal/jobs/score-notifications:
+    post:
+      summary: Trigger scoring job
+      responses:
+        '202':
+          description: Job accepted
+components:
+  parameters:
+    ProfileId:
+      in: path
+      name: profileId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ExampleId:
+      in: path
+      name: exampleId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    NotificationId:
+      in: path
+      name: notificationId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    MeResponse:
+      type: object
+      required: [id, email, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+    ProfileUpsertRequest:
+      type: object
+      required: [name, description, includeKeywords, excludeKeywords, similarityThreshold]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        includeKeywords:
+          type: array
+          items:
+            type: string
+        excludeKeywords:
+          type: array
+          items:
+            type: string
+        similarityThreshold:
+          type: number
+        enabled:
+          type: boolean
+    ProfileSummary:
+      type: object
+      required: [id, name, enabled, similarityThreshold]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        enabled:
+          type: boolean
+        similarityThreshold:
+          type: number
+    ProfileDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProfileSummary'
+        - type: object
+          required: [description, includeKeywords, excludeKeywords, examples]
+          properties:
+            description:
+              type: string
+            includeKeywords:
+              type: array
+              items:
+                type: string
+            excludeKeywords:
+              type: array
+              items:
+                type: string
+            examples:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProfileExample'
+    ProfileExample:
+      type: object
+      required: [id, sourceType, title]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sourceType:
+          type: string
+        title:
+          type: string
+    ManualExampleRequest:
+      type: object
+      required: [title, text]
+      properties:
+        title:
+          type: string
+        text:
+          type: string
+    AnnouncementExampleRequest:
+      type: object
+      required: [announcementId]
+      properties:
+        announcementId:
+          type: string
+          format: uuid
+    NotificationListResponse:
+      type: object
+      required: [items, page]
+      properties:
+        page:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationListItem'
+    NotificationListItem:
+      type: object
+      required: [id, title, profileName, finalScore, summary, isRead, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        profileName:
+          type: string
+        finalScore:
+          type: number
+        summary:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        applyEndAt:
+          type: string
+          format: date-time
+          nullable: true
+    NotificationDetail:
+      type: object
+      required: [id, title, summary, reason, source]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        summary:
+          type: string
+        reason:
+          type: object
+          properties:
+            includeHits:
+              type: array
+              items:
+                type: string
+            excludeHits:
+              type: array
+              items:
+                type: string
+            finalScore:
+              type: number
+            profileSimilarity:
+              type: number
+              nullable: true
+            exampleMaxSimilarity:
+              type: number
+              nullable: true
+        source:
+          type: object
+          properties:
+            detailUrl:
+              type: string
+            postedAt:
+              type: string
+              format: date
+              nullable: true
+            applyStartAt:
+              type: string
+              format: date-time
+              nullable: true
+            applyEndAt:
+              type: string
+              format: date-time
+              nullable: true

@@ -1,0 +1,17 @@
+{
+  "name": "@ring/schemas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "zod": "^3.24.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo schemas lint skipped",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo schemas tests skipped"
+  }
+}

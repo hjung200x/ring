@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String            @id @default(uuid())
+  email          String            @unique
+  passwordHash   String
+  name           String
+  phoneNumber    String?
+  kakaoTarget    String?
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  sessions       AuthSession[]
+  profiles       InterestProfile[]
+  notifications  Notification[]
+}
+
+model AuthSession {
+  id               String   @id @default(uuid())
+  userId           String
+  sessionTokenHash String   @unique
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model InterestProfile {
+  id                   String            @id @default(uuid())
+  userId               String
+  name                 String
+  description          String
+  includeKeywordsJson  Json
+  excludeKeywordsJson  Json
+  similarityThreshold  Float
+  enabled              Boolean           @default(true)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examples             InterestExample[]
+  profileEmbedding     ProfileEmbedding?
+  scores               Score[]
+  notifications        Notification[]
+}
+
+model InterestExample {
+  id             String   @id @default(uuid())
+  profileId      String
+  sourceType     String
+  sourceRef      String?
+  title          String
+  rawText        String
+  normalizedText String
+  attachmentPath String?
+  embeddingJson  Json?
+  embeddingModel String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  profile        InterestProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model SeenAnnouncement {
+  id            String   @id @default(uuid())
+  source        String
+  sourceAncmId  String
+  sourceBsnsYy  String
+  title         String
+  postedAt      DateTime?
+  decision      String
+  firstSeenAt   DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+  matchedAt     DateTime?
+  ignoredAt     DateTime?
+  failedAt      DateTime?
+  lastError     String?
+
+  @@unique([source, sourceAncmId, sourceBsnsYy])
+}
+
+model Announcement {
+  id                  String                 @id @default(uuid())
+  source              String
+  sourceAncmId        String
+  sourceBsnsYy        String
+  programId           String
+  title               String
+  statusText          String?
+  postedAt            DateTime?
+  applyStartAt        DateTime?
+  applyEndAt          DateTime?
+  detailUrl           String
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  detail              AnnouncementDetail?
+  attachments         Attachment[]
+  documents           Document[]
+  announcementEmbed   AnnouncementEmbedding?
+  scores              Score[]
+  notifications       Notification[]
+
+  @@unique([source, sourceAncmId, sourceBsnsYy])
+}
+
+model AnnouncementDetail {
+  id                String       @id @default(uuid())
+  announcementId    String       @unique
+  rawHtmlPath       String?
+  sourcePayloadJson Json
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  announcement      Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+}
+
+model Attachment {
+  id                 String       @id @default(uuid())
+  announcementId     String
+  filename           String
+  extension          String
+  atchDocId          String
+  atchFileId         String
+  localPath          String?
+  isPrimaryNoticeDoc Boolean      @default(false)
+  downloadedAt       DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  announcement       Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  document           Document?
+}
+
+model Document {
+  id               String       @id @default(uuid())
+  announcementId   String
+  attachmentId     String       @unique
+  docType          String
+  extractionStatus String
+  extractionError  String?
+  rawText          String?
+  normalizedText   String?
+  summaryText      String?
+  textHash         String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  announcement     Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  attachment       Attachment   @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+}
+
+model AnnouncementEmbedding {
+  id              String       @id @default(uuid())
+  announcementId  String       @unique
+  embeddingModel  String
+  sourceText      String
+  embeddingJson   Json
+  createdAt       DateTime     @default(now())
+  announcement    Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+}
+
+model ProfileEmbedding {
+  id              String          @id @default(uuid())
+  profileId       String          @unique
+  embeddingModel  String
+  sourceText      String
+  embeddingJson   Json
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  profile         InterestProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model Score {
+  id                    String          @id @default(uuid())
+  announcementId        String
+  profileId             String
+  keywordPass           Boolean
+  keywordHitsJson       Json
+  excludeHitsJson       Json
+  profileSimilarity     Float?
+  exampleMaxSimilarity  Float?
+  exampleAvgSimilarity  Float?
+  finalScore            Float?
+  scorerVersion         String
+  createdAt             DateTime        @default(now())
+  announcement          Announcement    @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  profile               InterestProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  notification          Notification?
+
+  @@unique([profileId, announcementId, scorerVersion])
+}
+
+model Notification {
+  id             String          @id @default(uuid())
+  userId         String
+  profileId      String
+  announcementId String
+  scoreId        String          @unique
+  title          String
+  summary        String
+  reasonJson     Json
+  status         String          @default("created")
+  isRead         Boolean         @default(false)
+  readAt         DateTime?
+  channelType    String          @default("in_app")
+  deliveredAt    DateTime?
+  dedupeKey      String          @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile        InterestProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  announcement   Announcement    @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  score          Score           @relation(fields: [scoreId], references: [id], onDelete: Cascade)
+}
+
+model SourceSyncState {
+  id                String   @id @default(uuid())
+  source            String
+  jobName           String
+  cursorJson        Json?
+  lastSeenItemKey   String?
+  lastSeenPostedAt  DateTime?
+  lastSuccessAt     DateTime?
+  lastRunStartedAt  DateTime?
+  lastRunFinishedAt DateTime?
+  status            String   @default("idle")
+  lastError         String?
+
+  @@unique([source, jobName])
+}
