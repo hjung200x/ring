@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { NotificationDetailDto, NotificationListItemDto } from '@ring/types';
 import { apiFetch } from '../lib/api-client.js';
@@ -46,31 +46,19 @@ export const NotificationListPage = () => {
         <div className='notifications-brand'>
           <span className='notifications-brand-mark'>R</span>
           <div>
-            <h1>Notifications</h1>
-            <p>Interest-matched KEIT notices, ranked and ready to review.</p>
+            <h1>{'\uC54C\uB9BC'}</h1>
+            <p>{'\uAD00\uC2EC \uD504\uB85C\uD544\uC5D0 \uB9DE\uB294 KEIT \uACF5\uACE0\uB9CC \uC120\uBCC4\uD574\uC11C \uBCF4\uC5EC\uC90D\uB2C8\uB2E4.'}</p>
           </div>
         </div>
         <div className='notifications-filterbar'>
-          <button
-            type='button'
-            className={`filter-chip ${filter === 'all' ? 'is-active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All
+          <button type='button' className={`filter-chip ${filter === 'all' ? 'is-active' : ''}`} onClick={() => setFilter('all')}>
+            {'\uC804\uCCB4'}
           </button>
-          <button
-            type='button'
-            className={`filter-chip ${filter === 'unread' ? 'is-active' : ''}`}
-            onClick={() => setFilter('unread')}
-          >
-            Unread
+          <button type='button' className={`filter-chip ${filter === 'unread' ? 'is-active' : ''}`} onClick={() => setFilter('unread')}>
+            {'\uC548\uC77D\uC74C'}
           </button>
-          <button
-            type='button'
-            className={`filter-chip ${filter === 'read' ? 'is-active' : ''}`}
-            onClick={() => setFilter('read')}
-          >
-            Read
+          <button type='button' className={`filter-chip ${filter === 'read' ? 'is-active' : ''}`} onClick={() => setFilter('read')}>
+            {'\uC77D\uC74C'}
           </button>
         </div>
       </header>
@@ -80,37 +68,32 @@ export const NotificationListPage = () => {
           <div className='notifications-list-chrome'>
             <div>
               <strong>{items.length}</strong>
-              <span> matched notices</span>
+              <span>{'\uAC1C\uC758 \uB9E4\uCE6D \uACF5\uACE0'}</span>
             </div>
-            <span className='list-hint'>Newest first</span>
+            <span className='list-hint'>{'\uCD5C\uC2E0\uC21C'}</span>
           </div>
 
-          {listQuery.isLoading ? <div className='empty-state'>Loading notifications...</div> : null}
-          {listQuery.isError ? <div className='empty-state'>Failed to load notifications.</div> : null}
+          {listQuery.isLoading ? <div className='empty-state'>{'\uC54C\uB9BC\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4...'}</div> : null}
+          {listQuery.isError ? <div className='empty-state'>{'\uC54C\uB9BC\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.'}</div> : null}
           {!listQuery.isLoading && !listQuery.isError && items.length === 0 ? (
             <div className='empty-state empty-state-illustrated'>
-              <p>No notices matched the current profile yet.</p>
+              <p>{'\uD604\uC7AC \uD504\uB85C\uD544\uC5D0 \uB9DE\uB294 \uACF5\uACE0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.'}</p>
             </div>
           ) : null}
 
           <div className='notifications-list'>
             {items.map((item) => (
-              <NotificationListCard
-                key={item.id}
-                item={item}
-                selected={item.id === selectedId}
-                onSelect={setSelectedId}
-              />
+              <NotificationListCard key={item.id} item={item} selected={item.id === selectedId} onSelect={setSelectedId} />
             ))}
           </div>
         </div>
 
         <div className='notifications-detail-pane'>
-          {detailQuery.isLoading ? <div className='empty-detail'>Loading detail...</div> : null}
-          {detailQuery.isError ? <div className='empty-detail'>Failed to load detail.</div> : null}
+          {detailQuery.isLoading ? <div className='empty-detail'>{'\uC0C1\uC138 \uB0B4\uC6A9\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4...'}</div> : null}
+          {detailQuery.isError ? <div className='empty-detail'>{'\uC0C1\uC138 \uB0B4\uC6A9\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.'}</div> : null}
           {!selectedId && !detailQuery.isLoading ? (
             <div className='empty-detail empty-state-illustrated'>
-              <p>Select a notice to inspect it.</p>
+              <p>{'\uBAA9\uB85D\uC5D0\uC11C \uACF5\uACE0\uB97C \uC120\uD0DD\uD558\uBA74 \uC0C1\uC138 \uB0B4\uC6A9\uC744 \uBCFC \uC218 \uC788\uC2B5\uB2C8\uB2E4.'}</p>
             </div>
           ) : null}
           {detailQuery.data ? <NotificationDetailPanel detail={detailQuery.data} /> : null}

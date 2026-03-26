@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../lib/api-client.js';
 import { LoginPage } from './LoginPage.js';
@@ -50,21 +50,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className='app-shell-orb app-shell-orb-b' />
       <header className='app-header'>
         <div className='app-logo'>
-          <span className='app-logo-mark'>ring</span>
-          <p>Interest-first notice monitor</p>
+          <span className='app-logo-mark'>RING</span>
+          <p>R&amp;D INformation Guard</p>
         </div>
         <nav className='app-nav'>
-          <Link to='/notifications'>Notifications</Link>
-          <Link to='/profiles'>Profiles</Link>
+          <Link to='/notifications'>{'\uC54C\uB9BC'}</Link>
+          <Link to='/profiles'>{'\uD504\uB85C\uD544'}</Link>
           {sessionQuery.data ? (
             <>
               <span className='app-nav-user'>{sessionQuery.data.name}</span>
               <button type='button' className='app-nav-button' onClick={onLogout}>
-                Logout
+                {'\uB85C\uADF8\uC544\uC6C3'}
               </button>
             </>
           ) : (
-            <Link to='/login'>Login</Link>
+            <Link to='/login'>{'\uB85C\uADF8\uC778'}</Link>
           )}
         </nav>
       </header>

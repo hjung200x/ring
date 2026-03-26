@@ -13,11 +13,11 @@ export const NotificationDetailPage = () => {
   });
 
   if (query.isLoading) {
-    return <div className='empty-detail standalone-detail'>Loading detail...</div>;
+    return <div className='empty-detail standalone-detail'>상세 내용을 불러오는 중입니다...</div>;
   }
 
   if (query.isError || !query.data) {
-    return <div className='empty-detail standalone-detail'>Failed to load detail.</div>;
+    return <div className='empty-detail standalone-detail'>상세 내용을 불러오지 못했습니다.</div>;
   }
 
   return (

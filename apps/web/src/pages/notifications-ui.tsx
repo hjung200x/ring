@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom';
+ï»¿import { Link } from 'react-router-dom';
 import type { NotificationDetailDto, NotificationListItemDto } from '@ring/types';
 
 const scoreLabel = (score: number) => {
-  if (score >= 0.82) return 'High';
-  if (score >= 0.65) return 'Medium';
-  return 'Low';
+  if (score >= 0.82) return '\uB192\uC74C';
+  if (score >= 0.65) return '\uBCF4\uD1B5';
+  return '\uB0AE\uC74C';
 };
 
 const scoreClass = (score: number) => {
@@ -14,7 +14,7 @@ const scoreClass = (score: number) => {
 };
 
 const formatDate = (value: string | null) => {
-  if (!value) return 'TBD';
+  if (!value) return '\uBBF8\uC815';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString('ko-KR');
@@ -24,16 +24,16 @@ const summarizeReason = (detail: NotificationDetailDto) => {
   const parts: string[] = [];
 
   if (detail.reason.includeHits.length > 0) {
-    parts.push(`Matched keywords: ${detail.reason.includeHits.join(', ')}`);
+    parts.push(`\uB9E4\uCE6D \uD0A4\uC6CC\uB4DC: ${detail.reason.includeHits.join(', ')}`);
   }
   if (detail.reason.profileSimilarity !== null) {
-    parts.push(`Profile similarity ${detail.reason.profileSimilarity.toFixed(3)}`);
+    parts.push(`\uD504\uB85C\uD544 \uC720\uC0AC\uB3C4 ${detail.reason.profileSimilarity.toFixed(3)}`);
   }
   if (detail.reason.exampleMaxSimilarity !== null) {
-    parts.push(`Example similarity ${detail.reason.exampleMaxSimilarity.toFixed(3)}`);
+    parts.push(`\uC608\uC2DC \uC720\uC0AC\uB3C4 ${detail.reason.exampleMaxSimilarity.toFixed(3)}`);
   }
 
-  return parts.length > 0 ? parts.join(' ¡¤ ') : 'Matched by the current interest profile.';
+  return parts.length > 0 ? parts.join(' Â· ') : '\uD604\uC7AC \uAD00\uC2EC \uD504\uB85C\uD544 \uAE30\uC900\uC73C\uB85C \uB9E4\uCE6D\uB41C \uACF5\uACE0\uC785\uB2C8\uB2E4.';
 };
 
 const summaryPreview = (text: string) => {
@@ -73,7 +73,7 @@ export const NotificationListCard = ({
             {scoreLabel(item.finalScore)} {item.finalScore.toFixed(3)}
           </span>
           <span className='profile-badge'>{item.profileName}</span>
-          {isDeadlineImminent ? <span className='deadline-badge'>Closing soon</span> : null}
+          {isDeadlineImminent ? <span className='deadline-badge'>{'\uB9C8\uAC10\uC784\uBC15'}</span> : null}
         </div>
         <span className='meta-date'>{formatDate(item.createdAt)}</span>
       </div>
@@ -81,9 +81,9 @@ export const NotificationListCard = ({
       <p className='notification-card-summary'>{summaryPreview(item.summary)}</p>
       <div className='notification-card-footer'>
         <span className='notification-card-period'>
-          Deadline {item.applyEndAt ? formatDate(item.applyEndAt) : 'Open-ended'}
+          {'\uB9C8\uAC10'} {item.applyEndAt ? formatDate(item.applyEndAt) : '\uC0C1\uC2DC'}
         </span>
-        <span className='notification-card-action'>Open detail</span>
+        <span className='notification-card-action'>{'\uC0C1\uC138 \uBCF4\uAE30'}</span>
       </div>
     </button>
   );
@@ -100,7 +100,7 @@ export const NotificationDetailPanel = ({
     {backLink ? (
       <div className='notification-detail-mobile-top'>
         <Link to={backLink} className='back-link'>
-          Back to notifications
+          {'\uC54C\uB9BC \uBAA9\uB85D\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30'}
         </Link>
       </div>
     ) : null}
@@ -111,19 +111,19 @@ export const NotificationDetailPanel = ({
         <div className='detail-hero-glow detail-hero-glow-b' />
         <div className='detail-badges'>
           <span className={scoreClass(detail.reason.finalScore)}>
-            Recommendation {scoreLabel(detail.reason.finalScore)} {detail.reason.finalScore.toFixed(3)}
+            {'\uCD94\uCC9C \uC810\uC218'} {scoreLabel(detail.reason.finalScore)} {detail.reason.finalScore.toFixed(3)}
           </span>
         </div>
         <h1 className='detail-title'>{detail.title}</h1>
         <div className='detail-meta-grid'>
           <div className='detail-meta-card'>
-            <span className='detail-meta-label'>Application</span>
+            <span className='detail-meta-label'>{'\uC811\uC218 \uAE30\uAC04'}</span>
             <strong>
               {formatDate(detail.source.applyStartAt)} - {formatDate(detail.source.applyEndAt)}
             </strong>
           </div>
           <div className='detail-meta-card'>
-            <span className='detail-meta-label'>Posted</span>
+            <span className='detail-meta-label'>{'\uB4F1\uB85D\uC77C'}</span>
             <strong>{formatDate(detail.source.postedAt)}</strong>
           </div>
         </div>
@@ -131,8 +131,8 @@ export const NotificationDetailPanel = ({
 
       <div className='detail-section detail-section-accent'>
         <div className='detail-section-header'>
-          <span className='detail-section-kicker'>Why ring selected this</span>
-          <h2>Recommendation signal</h2>
+          <span className='detail-section-kicker'>{'\uC120\uC815 \uC774\uC720'}</span>
+          <h2>{'\uCD94\uCC9C \uADFC\uAC70'}</h2>
         </div>
         <p className='detail-lead'>{summarizeReason(detail)}</p>
         {detail.reason.includeHits.length > 0 ? (
@@ -148,8 +148,8 @@ export const NotificationDetailPanel = ({
 
       <div className='detail-section'>
         <div className='detail-section-header'>
-          <span className='detail-section-kicker'>Notice summary</span>
-          <h2>Summary</h2>
+          <span className='detail-section-kicker'>{'\uACF5\uACE0 \uC694\uC57D'}</span>
+          <h2>{'\uC694\uC57D'}</h2>
         </div>
         <p className='detail-summary'>{detail.summary}</p>
       </div>
@@ -157,11 +157,8 @@ export const NotificationDetailPanel = ({
 
     <div className='detail-footer'>
       <a className='primary-action' href={detail.source.detailUrl} target='_blank' rel='noreferrer'>
-        Open source notice
+        {'\uC6D0\uBB38 \uACF5\uACE0 \uBCF4\uAE30'}
       </a>
-      <button type='button' className='secondary-action'>
-        Save as example
-      </button>
     </div>
   </section>
 );
