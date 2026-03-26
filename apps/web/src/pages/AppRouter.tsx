@@ -54,8 +54,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <p>R&amp;D INformation Guard</p>
         </div>
         <nav className='app-nav'>
-          <Link to='/notifications'>{'\uC54C\uB9BC'}</Link>
-          <Link to='/profiles'>{'\uD504\uB85C\uD544'}</Link>
+          <Link to='/notifications'>{'\uACF5\uACE0\uC54C\uB9BC'}</Link>
+          <Link to='/profiles'>{'\uAC80\uC0C9\uC870\uAC74'}</Link>
           {sessionQuery.data ? (
             <>
               <span className='app-nav-user'>{sessionQuery.data.name}</span>
@@ -80,6 +80,7 @@ export const AppRouter = () => (
       <Route path='/notifications' element={<NotificationListPage />} />
       <Route path='/notifications/:notificationId' element={<NotificationDetailPage />} />
       <Route path='/profiles' element={<ProfileListPage />} />
+      <Route path='/profiles/new' element={<ProfileDetailPage />} />
       <Route path='/profiles/:profileId' element={<ProfileDetailPage />} />
     </Routes>
   </Layout>

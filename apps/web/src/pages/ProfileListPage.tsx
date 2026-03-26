@@ -21,10 +21,15 @@ export const ProfileListPage = () => {
 
   return (
     <section className='panel-surface'>
-      <h1>{'\uD504\uB85C\uD544'}</h1>
-      <p className='login-subcopy'>
-        {'\uD504\uB85C\uD544\uC740 \uC5EC\uB7EC \uAC1C \uB9CC\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uD504\uB85C\uD544\uB9C8\uB2E4 \uD0A4\uC6CC\uB4DC, \uC124\uBA85, \uC608\uC2DC \uACF5\uACE0\uBB38\uC744 \uB530\uB85C \uAC00\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4.'}
-      </p>
+      <div className='profile-list-header'>
+        <div>
+          <h1>{'\uAC80\uC0C9\uC870\uAC74'}</h1>
+          <p className='login-subcopy'>
+            {'\uAC80\uC0C9\uC870\uAC74\uC740 \uC5EC\uB7EC \uAC1C \uB9CC\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uAC01 \uAC80\uC0C9\uC870\uAC74\uB9C8\uB2E4 \uD0A4\uC6CC\uB4DC, \uC124\uBA85, \uC608\uC2DC \uACF5\uACE0\uBB38\uC744 \uB530\uB85C \uAC00\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4.'}
+          </p>
+        </div>
+      </div>
+
       <div className='profile-list'>
         {items.map((profile) => (
           <article key={profile.id} className='profile-card'>
@@ -37,6 +42,15 @@ export const ProfileListPage = () => {
           </article>
         ))}
       </div>
+
+      <Link to='/profiles/new' className='profile-add-tile'>
+        <span className='profile-add-icon' aria-hidden='true'>
+          <svg viewBox='0 0 24 24' role='img' focusable='false'>
+            <path d='M12 5v14M5 12h14' />
+          </svg>
+        </span>
+        <span>{'\uAC80\uC0C9\uC870\uAC74 \uCD94\uAC00'}</span>
+      </Link>
     </section>
   );
 };
