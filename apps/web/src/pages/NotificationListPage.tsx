@@ -47,7 +47,7 @@ export const NotificationListPage = () => {
           <span className='notifications-brand-mark'>R</span>
           <div>
             <h1>{'\uC54C\uB9BC'}</h1>
-            <p>{'\uAD00\uC2EC \uD504\uB85C\uD544\uC5D0 \uB9DE\uB294 KEIT \uACF5\uACE0\uB9CC \uC120\uBCC4\uD574\uC11C \uBCF4\uC5EC\uC90D\uB2C8\uB2E4.'}</p>
+            <p>{'\uB4F1\uB85D\uB41C \uAD00\uC2EC \uACF5\uACE0\uC5D0 \uB9DE\uB294 KEIT \uACF5\uACE0\uB9CC \uC120\uBCC4\uD574\uC11C \uBCF4\uC5EC\uC90D\uB2C8\uB2E4.'}</p>
           </div>
         </div>
         <div className='notifications-filterbar'>
@@ -77,7 +77,7 @@ export const NotificationListPage = () => {
           {listQuery.isError ? <div className='empty-state'>{'\uC54C\uB9BC\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.'}</div> : null}
           {!listQuery.isLoading && !listQuery.isError && items.length === 0 ? (
             <div className='empty-state empty-state-illustrated'>
-              <p>{'\uD604\uC7AC \uD504\uB85C\uD544\uC5D0 \uB9DE\uB294 \uACF5\uACE0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.'}</p>
+              <p>{'\uAC80\uC0C9 \uC870\uAC74\uC5D0 \uB9DE\uB294 \uACF5\uACE0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.'}</p>
             </div>
           ) : null}
 
