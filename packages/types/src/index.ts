@@ -1,4 +1,5 @@
-export type InterestExampleSourceType = "announcement" | "manual_text";
+﻿export type InterestExampleSourceType = "announcement" | "manual_text";
+export type UserScheduleUnit = "week" | "day" | "hour";
 
 export interface InterestProfileInput {
   name: string;
@@ -14,6 +15,56 @@ export interface InterestExampleInput {
   title: string;
   text?: string;
   announcementId?: string;
+}
+
+export interface UserScheduleInput {
+  scheduleUnit: UserScheduleUnit;
+  scheduleValue: number;
+}
+
+export interface UserScheduleDto {
+  scheduleUnit: UserScheduleUnit;
+  scheduleValue: number;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+}
+
+export interface SessionUserDto {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  isAdmin: boolean;
+  schedule: UserScheduleDto;
+}
+
+export interface AdminUserDto {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserCreateInput {
+  username: string;
+  email: string;
+  password: string;
+  name: string;
+  isActive?: boolean;
+}
+
+export interface AdminUserUpdateInput {
+  email: string;
+  name: string;
+  isActive: boolean;
+  password?: string;
+}
+
+export interface AdminUserPasswordInput {
+  password: string;
 }
 
 export interface NoticeExtractionResult {

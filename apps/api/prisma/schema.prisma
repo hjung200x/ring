@@ -9,12 +9,17 @@ datasource db {
 
 model User {
   id             String            @id @default(uuid())
+  username       String?           @unique
   email          String            @unique
   passwordHash   String
   name           String
   phoneNumber    String?
   kakaoTarget    String?
   isActive       Boolean           @default(true)
+  scheduleUnit   String            @default("day")
+  scheduleValue  Int               @default(1)
+  lastRunAt      DateTime?
+  nextRunAt      DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   sessions       AuthSession[]

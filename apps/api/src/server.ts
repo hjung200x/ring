@@ -1,9 +1,9 @@
 ﻿import { buildApp } from './app.js';
-import { registerDailyJobs } from './lib/scheduled-jobs.js';
+import { registerHourlyJobs } from './lib/scheduled-jobs.js';
 
 const start = async () => {
   const app = await buildApp();
-  registerDailyJobs(app);
+  registerHourlyJobs(app);
   const host = app.config.HOST;
   const port = app.config.PORT;
   await app.listen({ host, port });

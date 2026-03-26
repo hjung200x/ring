@@ -1,10 +1,12 @@
 ﻿import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../lib/api-client.js';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@example.com');
+  const queryClient = useQueryClient();
+  const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('change-me-now');
   const [status, setStatus] = useState('');
 
@@ -15,8 +17,9 @@ export const LoginPage = () => {
     try {
       await apiFetch('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
+      await queryClient.invalidateQueries({ queryKey: ['session-user'] });
       setStatus('\uB85C\uADF8\uC778\uB418\uC5C8\uC2B5\uB2C8\uB2E4.');
       navigate('/notifications');
     } catch (error) {
@@ -28,10 +31,10 @@ export const LoginPage = () => {
     <section className='login-panel'>
       <h1>{'\uB85C\uADF8\uC778'}</h1>
       <p className='login-subcopy'>
-        {'\uB4F1\uB85D\uB41C \uACC4\uC815\uC73C\uB85C \uB85C\uADF8\uC778\uD558\uBA74 \uAD00\uC2EC \uACF5\uACE0 \uC54C\uB9BC\uACFC \uD504\uB85C\uD544 \uC124\uC815\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.'}
+        {'\uB4F1\uB85D\uB41C \uACC4\uC815\uC73C\uB85C \uB85C\uADF8\uC778\uD558\uBA74 \uAD00\uC2EC \uACF5\uACE0 \uC54C\uB9BC\uACFC \uAC80\uC0C9\uC870\uAC74 \uC124\uC815\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.'}
       </p>
       <form onSubmit={onSubmit} className='login-form'>
-        <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder={'\uC774\uBA54\uC77C'} />
+        <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder={'\uB85C\uADF8\uC778 \uC544\uC774\uB514'} />
         <input
           type='password'
           value={password}

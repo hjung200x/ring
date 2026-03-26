@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+﻿import type { FastifyInstance } from "fastify";
 import { buildEmbeddingSource } from "../documents/normalizer.js";
 import { EmbeddingsService } from "../embeddings/embeddings.service.js";
 import { runKeywordFilter } from "../matching/keyword-filter.js";
@@ -13,15 +13,18 @@ const buildProfileSource = (profile: {
     ? profile.includeKeywordsJson.map(String)
     : [];
   return [
-    `프로필명: ${profile.name}`,
-    `관심 설명: ${profile.description}`,
-    includeKeywords.length ? `포함 키워드: ${includeKeywords.join(", ")}` : null,
+    `\uAC80\uC0C9\uC870\uAC74 \uC774\uB984: ${profile.name}`,
+    `\uC124\uBA85: ${profile.description}`,
+    includeKeywords.length ? `\uD3EC\uD568 \uD0A4\uC6CC\uB4DC: ${includeKeywords.join(", ")}` : null,
   ]
     .filter(Boolean)
     .join("\n");
 };
 
-export const scoreNotificationsJob = async (app: FastifyInstance) => {
+export const scoreNotificationsJob = async (
+  app: FastifyInstance,
+  options?: { userIds?: string[] },
+) => {
   if (!app.config.OPENAI_API_KEY) {
     app.log.warn("OPENAI_API_KEY is missing; skipping score-notifications job");
     return;
@@ -37,7 +40,10 @@ export const scoreNotificationsJob = async (app: FastifyInstance) => {
     take: 20,
   });
   const profiles = await app.prisma.interestProfile.findMany({
-    where: { enabled: true },
+    where: {
+      enabled: true,
+      ...(options?.userIds?.length ? { userId: { in: options.userIds } } : {}),
+    },
     include: { user: true, examples: true },
   });
 
@@ -157,5 +163,8 @@ export const scoreNotificationsJob = async (app: FastifyInstance) => {
     }
   }
 
-  app.log.info({ documents: documents.length, profiles: profiles.length }, "score-notifications job finished");
+  app.log.info(
+    { documents: documents.length, profiles: profiles.length, filteredUsers: options?.userIds?.length ?? 0 },
+    "score-notifications job finished",
+  );
 };

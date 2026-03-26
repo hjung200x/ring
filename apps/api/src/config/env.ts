@@ -9,10 +9,10 @@ export const envSchema = z.object({
   CORS_ORIGIN: z.string().default("http://127.0.0.1:5173"),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
+  ADMIN_USERNAME: z.string().default("admin"),
   ADMIN_EMAIL: z.string().email().default("admin@example.com"),
   ADMIN_PASSWORD: z.string().min(8).default("change-me-now"),
   ADMIN_NAME: z.string().default("Admin"),
   JOB_ENABLED: z.coerce.boolean().default(true),
   STORAGE_ROOT: z.string().default("apps/api/storage")
 });
-

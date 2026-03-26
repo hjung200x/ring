@@ -22,12 +22,20 @@ export const registerAuthSession = fp(async (app) => {
         expiresAt,
       },
     });
+    app.log.info(
+      { userId, expiresAt: expiresAt.toISOString() },
+      "auth.session.created"
+    );
     return { token, expiresAt };
   });
 
-  app.decorate("requireSession", async (request, reply) => {
+  app.decorate("requireSession", async (request, _reply) => {
     const token = request.cookies[COOKIE_NAME];
     if (!token) {
+      app.log.warn(
+        { path: request.url, method: request.method },
+        "auth.session.missing_cookie"
+      );
       throw unauthorizedError();
     }
 
@@ -36,15 +44,46 @@ export const registerAuthSession = fp(async (app) => {
       include: { user: true },
     });
 
-    if (!session || session.expiresAt < new Date() || !session.user.isActive) {
+    if (!session) {
+      app.log.warn(
+        { path: request.url, method: request.method },
+        "auth.session.not_found"
+      );
+      throw unauthorizedError();
+    }
+
+    if (session.expiresAt < new Date()) {
+      app.log.warn(
+        {
+          path: request.url,
+          method: request.method,
+          userId: session.userId,
+          expiresAt: session.expiresAt.toISOString(),
+        },
+        "auth.session.expired"
+      );
+      throw unauthorizedError();
+    }
+
+    if (!session.user.isActive) {
+      app.log.warn(
+        { path: request.url, method: request.method, userId: session.userId },
+        "auth.session.inactive_user"
+      );
       throw unauthorizedError();
     }
 
     request.currentUser = {
       id: session.user.id,
+      username: session.user.username ?? session.user.email,
       email: session.user.email,
       name: session.user.name,
     };
+
+    app.log.info(
+      { path: request.url, method: request.method, userId: session.user.id },
+      "auth.session.accepted"
+    );
   });
 
   app.decorate("clearSessionCookie", (reply) => {
@@ -78,6 +117,6 @@ declare module "fastify" {
   }
 
   interface FastifyRequest {
-    currentUser: { id: string; email: string; name: string } | null;
+    currentUser: { id: string; username: string; email: string; name: string } | null;
   }
 }

@@ -1,0 +1,18 @@
+PS C:\proj\ring> cmd /c pnpm -C apps/api dev
+
+> @ring/api@0.1.0 dev C:\proj\ring\apps\api
+> tsx watch src/server.ts
+
+{"level":30,"time":1774515802624,"pid":24500,"hostname":"SNUPCB-HJUNG","msg":"Server listening at http://127.0.0.1:3000"}
+{"level":30,"time":1774515802624,"pid":24500,"hostname":"SNUPCB-HJUNG","msg":"api listening on http://127.0.0.1:3000"}
+{"level":30,"time":1774515806239,"pid":24500,"hostname":"SNUPCB-HJUNG","reqId":"req-1","req":{"method":"GET","url":"/api/me","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":52439},"msg":"incoming request"}
+{"level":30,"time":1774515806246,"pid":24500,"hostname":"SNUPCB-HJUNG","path":"/api/me","method":"GET","userId":"6578e3ba-6c4f-4257-ba19-5c42f302cbee","msg":"auth.session.accepted"}
+{"level":30,"time":1774515806247,"pid":24500,"hostname":"SNUPCB-HJUNG","userId":"6578e3ba-6c4f-4257-ba19-5c42f302cbee","msg":"auth.me.succeeded"}
+{"level":30,"time":1774515806251,"pid":24500,"hostname":"SNUPCB-HJUNG","reqId":"req-1","res":{"statusCode":200},"responseTime":11.924800038337708,"msg":"request completed"}
+{"level":30,"time":1774515806284,"pid":24500,"hostname":"SNUPCB-HJUNG","reqId":"req-2","req":{"method":"GET","url":"/api/notifications","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":52440},"msg":"incoming request"}
+{"level":30,"time":1774515806286,"pid":24500,"hostname":"SNUPCB-HJUNG","path":"/api/notifications","method":"GET","userId":"6578e3ba-6c4f-4257-ba19-5c42f302cbee","msg":"auth.session.accepted"}
+{"level":30,"time":1774515806288,"pid":24500,"hostname":"SNUPCB-HJUNG","reqId":"req-2","res":{"statusCode":200},"responseTime":3.4376999139785767,"msg":"request completed"}
+{"level":30,"time":1774515809939,"pid":24500,"hostname":"SNUPCB-HJUNG","reqId":"req-3","req":{"method":"POST","url":"/api/auth/logout","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":56961},"msg":"incoming request"}
+{"level":30,"time":1774515809939,"pid":24500,"hostname":"SNUPCB-HJUNG","method":"POST","path":"/api/auth/logout","hasSessionCookie":true,"msg":"auth.request.received"}
+{"level":40,"time":1774515809940,"pid":24500,"hostname":"SNUPCB-HJUNG","method":"POST","path":"/api/auth/logout","statusCode":400,"userId":null,"message":"Body cannot be empty when content-type is set to 'application/json'","msg":"request.failed"}
+{"level":30,"time":1774515809941,"pid":24500,"hostname":"SNUPCB-HJUNG","reqId":"req-3","res":{"statusCode":400},"responseTime":1.4796000719070435,"msg":"request completed"}

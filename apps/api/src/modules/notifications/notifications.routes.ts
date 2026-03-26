@@ -1,4 +1,5 @@
-import type { FastifyPluginAsync } from "fastify";
+﻿import type { FastifyPluginAsync } from "fastify";
+import { getSharedOwnerId } from "../../lib/shared-scope.js";
 import { NotificationsService } from "./notifications.service.js";
 
 export const notificationRoutes: FastifyPluginAsync = async (app) => {
@@ -10,14 +11,15 @@ export const notificationRoutes: FastifyPluginAsync = async (app) => {
       query.isRead === undefined ? undefined : query.isRead.toLowerCase() === "true";
     return {
       page: 1,
-      items: await service.list(request.currentUser!.id, parsed),
+      items: await service.list(await getSharedOwnerId(app), parsed),
     };
   });
 
   app.get("/:notificationId", { preHandler: app.requireSession }, async (request) => {
     const { notificationId } = request.params as { notificationId: string };
-    await service.markRead(request.currentUser!.id, notificationId);
-    return service.detail(request.currentUser!.id, notificationId);
+    const sharedOwnerId = await getSharedOwnerId(app);
+    await service.markRead(sharedOwnerId, notificationId);
+    return service.detail(sharedOwnerId, notificationId);
   });
 
   app.post(
@@ -25,7 +27,7 @@ export const notificationRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: app.requireSession },
     async (request, reply) => {
       const { notificationId } = request.params as { notificationId: string };
-      await service.markRead(request.currentUser!.id, notificationId);
+      await service.markRead(await getSharedOwnerId(app), notificationId);
       return reply.status(204).send();
     },
   );

@@ -47,7 +47,7 @@ export const NotificationListPage = () => {
           <span className='notifications-brand-mark'>R</span>
           <div>
             <h1>{'\uC54C\uB9BC'}</h1>
-            <p>{'\uB4F1\uB85D\uB41C \uAD00\uC2EC \uACF5\uACE0\uC5D0 \uB9DE\uB294 KEIT \uACF5\uACE0\uB9CC \uC120\uBCC4\uD574\uC11C \uBCF4\uC5EC\uC90D\uB2C8\uB2E4.'}</p>
+            <p>{'\uB4F1\uB85D\uB41C \uACF5\uD1B5 \uAC80\uC0C9\uC870\uAC74\uC5D0 \uB9DE\uB294 KEIT \uACF5\uACE0\uB9CC \uC120\uBCC4\uD574\uC11C \uBCF4\uC5EC\uC90D\uB2C8\uB2E4.'}</p>
           </div>
         </div>
         <div className='notifications-filterbar'>
@@ -68,7 +68,7 @@ export const NotificationListPage = () => {
           <div className='notifications-list-chrome'>
             <div>
               <strong>{items.length}</strong>
-              <span>{'\uAC1C\uC758 \uB9E4\uCE6D \uACF5\uACE0'}</span>
+              <span>{'\uAC1C\uC758 \uACF5\uD1B5 \uB9E4\uCE6D \uACF5\uACE0'}</span>
             </div>
             <span className='list-hint'>{'\uCD5C\uC2E0\uC21C'}</span>
           </div>
@@ -102,3 +102,4 @@ export const NotificationListPage = () => {
     </section>
   );
 };
+
