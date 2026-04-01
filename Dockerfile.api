@@ -27,4 +27,4 @@ ENV HOST=0.0.0.0
 ENV PORT=3000
 ENV DATABASE_URL=file:/app/apps/api/prisma/dev.db
 
-CMD ["node", "apps/api/dist/server.js"]
+CMD ["node", "apps/api/dist/apps/api/src/server.js"]
