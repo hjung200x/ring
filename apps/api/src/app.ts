@@ -1,4 +1,6 @@
-﻿import cookie from "@fastify/cookie";
+﻿import { createWriteStream, mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { adminUserPasswordSchema, scheduleUpdateSchema } from "@ring/schemas";
@@ -16,8 +18,20 @@ import { registerAuthSession } from "./plugins/auth-session.js";
 import { registerPrisma } from "./plugins/prisma.js";
 
 export const buildApp = async () => {
-  const app = Fastify({ logger: true });
   const config = envSchema.parse(process.env);
+  const logPath = resolve(process.cwd(), '..', '..', 'log', 'backend.log');
+  mkdirSync(dirname(logPath), { recursive: true });
+  const logFileStream = createWriteStream(logPath, { flags: 'a' });
+  const app = Fastify({
+    logger: {
+      stream: {
+        write(chunk: string) {
+          process.stdout.write(chunk);
+          logFileStream.write(chunk);
+        },
+      },
+    },
+  });
   app.decorate("config", config);
 
   app.setErrorHandler((error, request, reply) => {
@@ -62,7 +76,7 @@ export const buildApp = async () => {
     const sharedOwnerId = await getSharedOwnerId(app);
     const sharedOwner = await app.prisma.user.findUniqueOrThrow({
       where: { id: sharedOwnerId },
-      select: { scheduleUnit: true, scheduleValue: true, lastRunAt: true, nextRunAt: true },
+      select: { scheduleEnabled: true, scheduleUnit: true, scheduleValue: true, lastRunAt: true, nextRunAt: true },
     });
 
     const resolvedUsername = user.username ?? user.email;
@@ -73,6 +87,7 @@ export const buildApp = async () => {
       name: user.name,
       isAdmin: resolvedUsername === app.config.ADMIN_USERNAME,
       schedule: {
+        scheduleEnabled: sharedOwner.scheduleEnabled,
         scheduleUnit: sharedOwner.scheduleUnit as "week" | "day" | "hour",
         scheduleValue: sharedOwner.scheduleValue,
         lastRunAt: sharedOwner.lastRunAt?.toISOString() ?? null,
@@ -91,6 +106,7 @@ export const buildApp = async () => {
       {
         userId: request.currentUser!.id,
         sharedOwnerId,
+        scheduleEnabled: payload.scheduleEnabled,
         scheduleUnit: payload.scheduleUnit,
         scheduleValue: payload.scheduleValue,
       },
@@ -99,13 +115,16 @@ export const buildApp = async () => {
     await app.prisma.user.update({
       where: { id: sharedOwnerId },
       data: {
+        scheduleEnabled: payload.scheduleEnabled,
         scheduleUnit: payload.scheduleUnit,
         scheduleValue: payload.scheduleValue,
-        nextRunAt: new Date(),
+        nextRunAt: payload.scheduleEnabled ? new Date() : null,
       },
     });
 
-    void runScheduledPipelineForUsers(app, [sharedOwnerId], "schedule-updated");
+    if (payload.scheduleEnabled) {
+      void runScheduledPipelineForUsers(app, [sharedOwnerId], "schedule-updated");
+    }
     app.log.info({ userId: request.currentUser!.id, sharedOwnerId }, "schedule.update.succeeded");
     return reply.status(204).send();
   });

@@ -21,7 +21,7 @@ export const runScheduledPipelineForUsers = async (
 
   const sharedOwner = await app.prisma.user.findUniqueOrThrow({
     where: { id: sharedOwnerId },
-    select: { id: true, scheduleUnit: true, scheduleValue: true },
+    select: { id: true, scheduleEnabled: true, scheduleUnit: true, scheduleValue: true },
   });
 
   const now = new Date();
@@ -29,7 +29,9 @@ export const runScheduledPipelineForUsers = async (
     where: { id: sharedOwner.id },
     data: {
       lastRunAt: now,
-      nextRunAt: calculateNextRunAt(sharedOwner.scheduleUnit as 'week' | 'day' | 'hour', sharedOwner.scheduleValue, now),
+      nextRunAt: sharedOwner.scheduleEnabled
+        ? calculateNextRunAt(sharedOwner.scheduleUnit as 'week' | 'day' | 'hour', sharedOwner.scheduleValue, now)
+        : null,
     },
   });
 
@@ -49,6 +51,7 @@ export const registerHourlyJobs = (app: FastifyInstance) => {
         where: {
           id: sharedOwnerId,
           isActive: true,
+          scheduleEnabled: true,
           profiles: { some: { enabled: true } },
           OR: [{ nextRunAt: null }, { nextRunAt: { lte: now } }],
         },

@@ -1,4 +1,4 @@
-export const normalizeNoticeText = (rawText: string): string =>
+﻿export const normalizeNoticeText = (rawText: string): string =>
   rawText
     .replace(/\r/g, "\n")
     .replace(/\n{2,}/g, "\n\n")
@@ -14,7 +14,7 @@ export const buildEmbeddingSource = (input: {
   return [
     `제목: ${input.title}`,
     input.applyPeriodText ? `접수기간: ${input.applyPeriodText}` : null,
-    "본문:",
+    '본문:',
     excerpt,
   ]
     .filter(Boolean)

@@ -13,9 +13,9 @@ const buildProfileSource = (profile: {
     ? profile.includeKeywordsJson.map(String)
     : [];
   return [
-    `\uAC80\uC0C9\uC870\uAC74 \uC774\uB984: ${profile.name}`,
-    `\uC124\uBA85: ${profile.description}`,
-    includeKeywords.length ? `\uD3EC\uD568 \uD0A4\uC6CC\uB4DC: ${includeKeywords.join(", ")}` : null,
+    `검색조건 이름: ${profile.name}`,
+    `설명: ${profile.description}`,
+    includeKeywords.length ? `포함 키워드: ${includeKeywords.join(", ")}` : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -44,17 +44,18 @@ export const scoreNotificationsJob = async (
       enabled: true,
       ...(options?.userIds?.length ? { userId: { in: options.userIds } } : {}),
     },
-    include: { user: true, examples: true },
+    include: { user: true },
   });
 
   for (const document of documents) {
+    const embeddingBody = document.summaryText?.trim() || (document.normalizedText ?? "");
     const sourceText = buildEmbeddingSource({
       title: document.announcement.title,
       applyPeriodText:
         document.announcement.applyStartAt && document.announcement.applyEndAt
           ? `${document.announcement.applyStartAt.toISOString()} ~ ${document.announcement.applyEndAt.toISOString()}`
           : null,
-      normalizedText: document.normalizedText ?? "",
+      normalizedText: embeddingBody,
     });
 
     const announcementEmbedding = await embeddings.embedText(sourceText);
@@ -70,7 +71,7 @@ export const scoreNotificationsJob = async (
       const keyword = runKeywordFilter({
         title: document.announcement.title,
         filename: document.attachment.filename,
-        text: document.normalizedText ?? "",
+        text: `${document.summaryText ?? ""}\n${document.normalizedText ?? ""}`,
         includeKeywords,
         excludeKeywords,
       });
@@ -82,17 +83,10 @@ export const scoreNotificationsJob = async (
       const profileEmbedding = await embeddings.embedText(buildProfileSource(profile));
       const profileSimilarity = embeddings.cosineSimilarity(announcementEmbedding, profileEmbedding);
 
-      const exampleSimilarities: number[] = [];
-      for (const example of profile.examples) {
-        const exampleEmbedding = await embeddings.embedText(example.normalizedText);
-        exampleSimilarities.push(embeddings.cosineSimilarity(announcementEmbedding, exampleEmbedding));
-      }
-
       const result = calculateAnnouncementScore({
         keyword,
         profileSimilarity,
-        exampleSimilarities,
-        threshold: Number(profile.similarityThreshold),
+        threshold: Math.min(Number(profile.similarityThreshold), 0.7),
       });
 
       const score = await app.prisma.score.upsert({
@@ -108,8 +102,8 @@ export const scoreNotificationsJob = async (
           keywordHitsJson: result.includeHits,
           excludeHitsJson: result.excludeHits,
           profileSimilarity: result.profileSimilarity,
-          exampleMaxSimilarity: result.exampleMaxSimilarity,
-          exampleAvgSimilarity: result.exampleAvgSimilarity,
+          exampleMaxSimilarity: null,
+          exampleAvgSimilarity: null,
           finalScore: result.finalScore,
         },
         create: {
@@ -119,8 +113,8 @@ export const scoreNotificationsJob = async (
           keywordHitsJson: result.includeHits,
           excludeHitsJson: result.excludeHits,
           profileSimilarity: result.profileSimilarity,
-          exampleMaxSimilarity: result.exampleMaxSimilarity,
-          exampleAvgSimilarity: result.exampleAvgSimilarity,
+          exampleMaxSimilarity: null,
+          exampleAvgSimilarity: null,
           finalScore: result.finalScore,
           scorerVersion: result.scorerVersion,
         },
@@ -140,7 +134,6 @@ export const scoreNotificationsJob = async (
             excludeHits: result.excludeHits,
             finalScore: result.finalScore,
             profileSimilarity: result.profileSimilarity,
-            exampleMaxSimilarity: result.exampleMaxSimilarity,
           },
         },
         create: {
@@ -155,7 +148,6 @@ export const scoreNotificationsJob = async (
             excludeHits: result.excludeHits,
             finalScore: result.finalScore,
             profileSimilarity: result.profileSimilarity,
-            exampleMaxSimilarity: result.exampleMaxSimilarity,
           },
           dedupeKey,
         },

@@ -1,4 +1,3 @@
-﻿export type InterestExampleSourceType = "announcement" | "manual_text";
 export type UserScheduleUnit = "week" | "day" | "hour";
 
 export interface InterestProfileInput {
@@ -10,19 +9,14 @@ export interface InterestProfileInput {
   enabled?: boolean;
 }
 
-export interface InterestExampleInput {
-  sourceType: InterestExampleSourceType;
-  title: string;
-  text?: string;
-  announcementId?: string;
-}
-
 export interface UserScheduleInput {
+  scheduleEnabled: boolean;
   scheduleUnit: UserScheduleUnit;
   scheduleValue: number;
 }
 
 export interface UserScheduleDto {
+  scheduleEnabled: boolean;
   scheduleUnit: UserScheduleUnit;
   scheduleValue: number;
   lastRunAt: string | null;
@@ -82,11 +76,9 @@ export interface KeywordFilterResult {
 
 export interface AnnouncementScoreResult extends KeywordFilterResult {
   profileSimilarity: number | null;
-  exampleMaxSimilarity: number | null;
-  exampleAvgSimilarity: number | null;
   finalScore: number | null;
   decision: "skip" | "notify";
-  scorerVersion: "v1.0.0";
+  scorerVersion: "v1.3.0";
 }
 
 export interface NotificationReason {
@@ -94,7 +86,6 @@ export interface NotificationReason {
   excludeHits: string[];
   finalScore: number;
   profileSimilarity: number | null;
-  exampleMaxSimilarity: number | null;
 }
 
 export interface NotificationListItemDto {

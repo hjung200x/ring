@@ -791,6 +791,12 @@ button {
   margin-top: 18px;
 }
 
+.profile-delete-button {
+  margin-top: 12px;
+  color: #a24646;
+  background: rgba(224, 99, 99, 0.08);
+}
+
 @media (max-width: 900px) {
   .profile-settings-grid {
     grid-template-columns: 1fr;
@@ -873,6 +879,38 @@ button {
   gap: 12px;
   flex-wrap: wrap;
   margin: 8px 0 18px;
+}
+
+.schedule-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  margin: 8px 0 18px;
+  border: 1px solid rgba(114, 92, 67, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.schedule-toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.schedule-toggle-copy strong {
+  color: #1f2a28;
+}
+
+.schedule-toggle-copy small {
+  color: rgba(47, 58, 55, 0.66);
+}
+
+.schedule-toggle-row input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: #7ca86d;
 }
 
 .schedule-save-button {
@@ -990,3 +1028,4 @@ button {
   color: rgba(47, 58, 55, 0.72);
   cursor: not-allowed;
 }
+

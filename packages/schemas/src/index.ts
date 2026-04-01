@@ -16,6 +16,7 @@ export const profileUpsertSchema = z.object({
 
 export const scheduleUpdateSchema = z
   .object({
+    scheduleEnabled: z.boolean(),
     scheduleUnit: z.enum(["week", "day", "hour"]),
     scheduleValue: z.coerce.number().int(),
   })

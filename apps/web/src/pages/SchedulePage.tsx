@@ -19,6 +19,7 @@ const formatDateTime = (value: string | null) =>
 
 export const SchedulePage = () => {
   const queryClient = useQueryClient();
+  const [scheduleEnabled, setScheduleEnabled] = useState(true);
   const [scheduleUnit, setScheduleUnit] = useState<UserScheduleUnit>('day');
   const [scheduleValue, setScheduleValue] = useState('1');
   const [status, setStatus] = useState('');
@@ -35,6 +36,7 @@ export const SchedulePage = () => {
       setStatus('\uC8FC\uAE30 \uC815\uBCF4\uB97C \uBD88\uB7EC\uC624\uB294 \uB3C4\uC911 \uC608\uC0C1\uD558\uC9C0 \uBABB\uD55C \uAC12\uC744 \uBC1B\uC558\uC2B5\uB2C8\uB2E4. \uAE30\uBCF8\uAC12\uC73C\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4.');
       return;
     }
+    setScheduleEnabled(sessionQuery.data.schedule.scheduleEnabled);
     setScheduleUnit(sessionQuery.data.schedule.scheduleUnit);
     setScheduleValue(String(sessionQuery.data.schedule.scheduleValue));
   }, [sessionQuery.data]);
@@ -67,12 +69,17 @@ export const SchedulePage = () => {
       apiFetch('/api/me/schedule', {
         method: 'PATCH',
         body: JSON.stringify({
+          scheduleEnabled,
           scheduleUnit,
           scheduleValue: Number(scheduleValue),
         }),
       }),
     onSuccess: async () => {
-      setStatus('\uC8FC\uAE30 \uC124\uC815\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uC9C0\uAE08 \uBC14\uB85C \uD55C \uBC88 \uB354 \uD655\uC778\uD569\uB2C8\uB2E4.');
+      setStatus(
+        scheduleEnabled
+          ? '\uC8FC\uAE30 \uC124\uC815\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uC9C0\uAE08 \uBC14\uB85C \uD55C \uBC88 \uB354 \uD655\uC778\uD569\uB2C8\uB2E4.'
+          : '\uC8FC\uAE30\uC801 \uAC80\uC0C9\uC744 \uBE44\uD65C\uC131\uD654\uD588\uC2B5\uB2C8\uB2E4.'
+      );
       await queryClient.invalidateQueries({ queryKey: ['session-user'] });
     },
     onError: (error) => {
@@ -94,10 +101,26 @@ export const SchedulePage = () => {
 
       <section className='profile-section-card schedule-card schedule-page-card'>
         <h2>{'\uACF5\uACE0 \uD655\uC778 \uC8FC\uAE30'}</h2>
+        <label className='schedule-toggle-row'>
+          <span className='schedule-toggle-copy'>
+            <strong>{'\uC8FC\uAE30\uC801 \uAC80\uC0C9 \uD65C\uC131\uD654'}</strong>
+            <small>{'\uBE44\uD65C\uC131\uD654\uD558\uBA74 \uC790\uB3D9 \uAC80\uC0C9\uC774 \uBA48\uCD94\uACE0 \uB2E4\uC74C \uC608\uC815 \uC2DC\uAC01\uB3C4 \uBE44\uC6CC\uC9D1\uB2C8\uB2E4.'}</small>
+          </span>
+          <input
+            type='checkbox'
+            checked={scheduleEnabled}
+            onChange={(event) => setScheduleEnabled(event.target.checked)}
+          />
+        </label>
         <div className='schedule-grid'>
           <label className='settings-field'>
             <span>{'\uBC18\uBCF5 \uB2E8\uC704'}</span>
-            <select className='panel-input' value={scheduleUnit} onChange={(event) => setScheduleUnit(event.target.value as UserScheduleUnit)}>
+            <select
+              className='panel-input'
+              value={scheduleUnit}
+              onChange={(event) => setScheduleUnit(event.target.value as UserScheduleUnit)}
+              disabled={!scheduleEnabled}
+            >
               <option value='week'>{'\uC8FC'}</option>
               <option value='day'>{'\uC77C'}</option>
               <option value='hour'>{'\uC2DC\uAC04'}</option>
@@ -113,6 +136,7 @@ export const SchedulePage = () => {
               step='1'
               value={scheduleValue}
               onChange={(event) => setScheduleValue(event.target.value)}
+              disabled={!scheduleEnabled}
             />
             <small>{activeRange.help}</small>
             <small>{`${activeRange.min} ~ ${activeRange.max}`}</small>
@@ -132,7 +156,10 @@ export const SchedulePage = () => {
           type='button'
           className='panel-button schedule-save-button'
           onClick={() => saveScheduleMutation.mutate()}
-          disabled={saveScheduleMutation.isPending || Number(scheduleValue) < activeRange.min || Number(scheduleValue) > activeRange.max}
+          disabled={
+            saveScheduleMutation.isPending ||
+            (scheduleEnabled && (Number(scheduleValue) < activeRange.min || Number(scheduleValue) > activeRange.max))
+          }
         >
           {saveScheduleMutation.isPending ? '\uC800\uC7A5 \uC911...' : '\uC8FC\uAE30 \uC800\uC7A5'}
         </button>

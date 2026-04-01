@@ -1,4 +1,4 @@
-const sectionNames = ["사업개요", "사업목적", "지원대상", "지원내용", "신청자격"];
+﻿const sectionNames = ['사업개요', '사업목적', '지원대상', '지원내용', '신청자격'];
 
 export const buildRuleBasedSummary = (input: {
   title: string;
@@ -24,5 +24,5 @@ export const buildRuleBasedSummary = (input: {
 
   return [input.title, period, ...(sections.length ? sections : [fallback])]
     .filter(Boolean)
-    .join("\n\n");
+    .join('\n\n');
 };

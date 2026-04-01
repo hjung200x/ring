@@ -8,7 +8,6 @@ interface ProfileSummary {
   name: string;
   similarityThreshold: string | number;
   enabled: boolean;
-  examples: Array<{ id: string }>;
 }
 
 export const ProfileListPage = () => {
@@ -25,7 +24,7 @@ export const ProfileListPage = () => {
         <div>
           <h1>{'\uAC80\uC0C9\uC870\uAC74'}</h1>
           <p className='login-subcopy'>
-            {'\uAC80\uC0C9\uC870\uAC74\uC740 \uC2DC\uC2A4\uD15C \uC804\uCCB4\uC5D0 \uACF5\uD1B5\uC73C\uB85C \uC801\uC6A9\uB429\uB2C8\uB2E4. \uB4F1\uB85D\uB41C \uBAA8\uB4E0 \uACC4\uC815\uC774 \uAC19\uC740 \uAC80\uC0C9\uC870\uAC74\uACFC \uC608\uC2DC \uACF5\uACE0\uBB38\uC744 \uD568\uAED8 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.'}
+            {'\uAC80\uC0C9\uC870\uAC74\uC740 \uC2DC\uC2A4\uD15C \uC804\uCCB4\uC5D0 \uACF5\uD1B5\uC73C\uB85C \uC801\uC6A9\uB429\uB2C8\uB2E4. \uB4F1\uB85D\uB41C \uBAA8\uB4E0 \uACC4\uC815\uC774 \uAC19\uC740 \uAC80\uC0C9\uC870\uAC74\uC744 \uD568\uAED8 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.'}
           </p>
         </div>
       </div>
@@ -36,8 +35,7 @@ export const ProfileListPage = () => {
             <Link to={`/profiles/${profile.id}`}>{profile.name}</Link>
             <small>
               {'\uC784\uACC4\uAC12'} {Number(profile.similarityThreshold).toFixed(2)} {' · '}
-              {profile.enabled ? '\uD65C\uC131' : '\uBE44\uD65C\uC131'} {' · '}
-              {'\uC608\uC2DC'} {profile.examples.length}{'\uAC1C'}
+              {profile.enabled ? '\uD65C\uC131' : '\uBE44\uD65C\uC131'}
             </small>
           </article>
         ))}

@@ -1,4 +1,5 @@
-﻿import { writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { writeFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { ensureStoragePath } from "../../config/paths.js";
@@ -12,11 +13,15 @@ import { KeitClient } from "./keit.client.js";
 
 const JOB_KEY = { source: "keit", jobName: "collect-announcements" };
 const MAX_PAGES = 10;
-const DUPLICATE_STREAK_LIMIT = 10;
+const DUPLICATE_STREAK_LIMIT = 30;
+const MIN_PAGES_BEFORE_DUPLICATE_STOP = 3;
 const CHEAP_TEXT_LIMIT = 6000;
+const PREVIEW_LIMIT = 240;
 
-const safeFilename = (value: string) => value.replace(/[\\/:*?"<>|]/g, "_");
+const safeFilename = (value: string) => value.replace(/[\/:*?"<>|]/g, "_");
 const parseKeywords = (value: unknown) => (Array.isArray(value) ? value.map(String) : []);
+const preview = (value: string | null | undefined) =>
+  (value ?? "").replace(/\s+/g, " ").trim().slice(0, PREVIEW_LIMIT);
 
 interface CandidateDocument {
   primaryFilename: string;
@@ -58,16 +63,30 @@ export class CollectorService {
     let duplicateStreak = 0;
     let lastSeenPostedAt: Date | null = null;
     let topCheckpointKey: string | null = null;
+    let pageCount = 0;
+    let stubCount = 0;
+    let seenDuplicateCount = 0;
+    let cheapMatchedCount = 0;
+    let keywordMatchedCount = 0;
+    let matchedCount = 0;
+    let ignoredCount = 0;
+    let failedCount = 0;
 
     try {
       for (let pageIndex = 1; pageIndex <= MAX_PAGES; pageIndex += 1) {
         const stubs = await this.client.fetchListPage(pageIndex);
         if (stubs.length === 0) {
+          this.app.log.info({ pageIndex }, "collector.page.empty");
           break;
         }
 
+        pageCount += 1;
+        stubCount += stubs.length;
+        this.app.log.info({ pageIndex, count: stubs.length }, "collector.page.fetched");
+
         if (pageIndex === 1 && stubs[0]) {
           topCheckpointKey = `${stubs[0].sourceAncmId}:${stubs[0].sourceBsnsYy}`;
+          this.app.log.info({ topCheckpointKey }, "collector.top_checkpoint.updated");
         }
 
         for (const stub of stubs) {
@@ -82,14 +101,35 @@ export class CollectorService {
           });
 
           if (seen) {
+            seenDuplicateCount += 1;
             duplicateStreak += 1;
             await this.app.prisma.seenAnnouncement.update({
               where: { id: seen.id },
               data: { lastSeenAt: new Date() },
             });
 
-            if (duplicateStreak >= DUPLICATE_STREAK_LIMIT) {
+            if (
+              pageIndex >= MIN_PAGES_BEFORE_DUPLICATE_STOP &&
+              duplicateStreak >= DUPLICATE_STREAK_LIMIT
+            ) {
+              this.app.log.info(
+                { duplicateStreak, seenDuplicateCount, pageIndex, sourceAncmId: stub.sourceAncmId, sourceBsnsYy: stub.sourceBsnsYy },
+                "collector.duplicate_streak.stop",
+              );
               await this.finishSync(topCheckpointKey ?? existingState?.lastSeenItemKey ?? null, lastSeenPostedAt);
+              this.app.log.info(
+                {
+                  pageCount,
+                  stubCount,
+                  seenDuplicateCount,
+                  cheapMatchedCount,
+                  keywordMatchedCount,
+                  matchedCount,
+                  ignoredCount,
+                  failedCount,
+                },
+                "collector.sync.summary",
+              );
               return;
             }
             continue;
@@ -104,6 +144,7 @@ export class CollectorService {
 
             const cheapMatchedProfiles = this.findCheapMatchedProfiles(stub.title, detail, profiles);
             if (cheapMatchedProfiles.length === 0) {
+              ignoredCount += 1;
               await this.recordSeen({
                 sourceAncmId: stub.sourceAncmId,
                 sourceBsnsYy: stub.sourceBsnsYy,
@@ -111,9 +152,14 @@ export class CollectorService {
                 postedAt,
                 decision: "ignored",
               });
+              this.app.log.info(
+                { sourceAncmId: stub.sourceAncmId, sourceBsnsYy: stub.sourceBsnsYy, title: detail.title || stub.title },
+                "collector.ignored.cheap_prefilter",
+              );
               continue;
             }
 
+            cheapMatchedCount += 1;
             const candidate = await this.buildCandidate(detail, stub.title);
             const matchedProfiles = cheapMatchedProfiles.filter((profile) => {
               const keyword = runKeywordFilter({
@@ -127,6 +173,7 @@ export class CollectorService {
             });
 
             if (matchedProfiles.length === 0) {
+              ignoredCount += 1;
               await this.recordSeen({
                 sourceAncmId: stub.sourceAncmId,
                 sourceBsnsYy: stub.sourceBsnsYy,
@@ -134,9 +181,14 @@ export class CollectorService {
                 postedAt,
                 decision: "ignored",
               });
+              this.app.log.info(
+                { sourceAncmId: stub.sourceAncmId, sourceBsnsYy: stub.sourceBsnsYy, title: detail.title || stub.title },
+                "collector.ignored.keyword_filter",
+              );
               continue;
             }
 
+            keywordMatchedCount += 1;
             const announcement = await this.app.prisma.announcement.create({
               data: {
                 source: "keit",
@@ -198,7 +250,18 @@ export class CollectorService {
               postedAt,
               decision: "matched",
             });
+            matchedCount += 1;
+            this.app.log.info(
+              {
+                sourceAncmId: stub.sourceAncmId,
+                sourceBsnsYy: stub.sourceBsnsYy,
+                title: detail.title || stub.title,
+                matchedProfiles: matchedProfiles.map((profile) => profile.id),
+              },
+              "collector.matched",
+            );
           } catch (error) {
+            failedCount += 1;
             await this.recordSeen({
               sourceAncmId: stub.sourceAncmId,
               sourceBsnsYy: stub.sourceBsnsYy,
@@ -207,11 +270,33 @@ export class CollectorService {
               decision: "failed",
               lastError: error instanceof Error ? error.message : String(error),
             });
+            this.app.log.warn(
+              {
+                sourceAncmId: stub.sourceAncmId,
+                sourceBsnsYy: stub.sourceBsnsYy,
+                title: stub.title,
+                message: error instanceof Error ? error.message : String(error),
+              },
+              "collector.failed",
+            );
           }
         }
       }
 
       await this.finishSync(topCheckpointKey ?? existingState?.lastSeenItemKey ?? null, lastSeenPostedAt);
+      this.app.log.info(
+        {
+          pageCount,
+          stubCount,
+          seenDuplicateCount,
+          cheapMatchedCount,
+          keywordMatchedCount,
+          matchedCount,
+          ignoredCount,
+          failedCount,
+        },
+        "collector.sync.summary",
+      );
     } catch (error) {
       await this.app.prisma.sourceSyncState.update({
         where: { source_jobName: JOB_KEY },
@@ -250,6 +335,29 @@ export class CollectorService {
   }
 
   private async buildCandidate(detail: KeitAnnouncementDetail, fallbackTitle: string): Promise<CandidateDocument> {
+    this.app.log.info(
+      {
+        title: detail.title || fallbackTitle,
+        attachments: detail.attachments.map((item) => ({
+          filename: item.filename,
+          atchDocId: item.atchDocId,
+          atchFileId: item.atchFileId,
+        })),
+      },
+      "collector.attachments.discovered",
+    );
+
+    this.app.log.info(
+      {
+        title: detail.title || fallbackTitle,
+        attachments: detail.attachments.map((item) => ({
+          filename: item.filename,
+          atchDocId: item.atchDocId,
+          atchFileId: item.atchFileId,
+        })),
+      },
+      "collector.attachments.discovered",
+    );
     const primary = selectPrimaryNoticeAttachment(detail.attachments);
     if (!primary) {
       return {
@@ -267,6 +375,18 @@ export class CollectorService {
         downloadedAt: null,
       };
     }
+
+    this.app.log.info(
+      {
+        title: detail.title || fallbackTitle,
+        selected: {
+          filename: primary.filename,
+          atchDocId: primary.atchDocId,
+          atchFileId: primary.atchFileId,
+        },
+      },
+      "collector.attachment.selected",
+    );
 
     const extension = extname(primary.filename).toLowerCase().replace(".", "");
     if (extension !== "hwp" && extension !== "hwpx") {
@@ -292,17 +412,81 @@ export class CollectorService {
       const localPath = resolve(tempDir, safeFilename(`${primary.atchDocId}_${primary.atchFileId}_${primary.filename}`));
       await writeFile(localPath, buffer);
 
+      this.app.log.info(
+        {
+          title: detail.title || fallbackTitle,
+          selectedFilename: primary.filename,
+          atchDocId: primary.atchDocId,
+          atchFileId: primary.atchFileId,
+          byteLength: buffer.length,
+          sha1: createHash("sha1").update(buffer).digest("hex"),
+          localPath,
+        },
+        "collector.attachment.downloaded",
+      );
+      this.app.log.info(
+        {
+          title: detail.title || fallbackTitle,
+          selectedFilename: primary.filename,
+          atchDocId: primary.atchDocId,
+          atchFileId: primary.atchFileId,
+          byteLength: buffer.length,
+          sha1: createHash("sha1").update(buffer).digest("hex"),
+          localPath,
+        },
+        "collector.attachment.downloaded",
+      );
+
       const scriptsRoot = resolve(process.cwd(), "scripts");
       const extractScript = resolve(scriptsRoot, "extract_notice.py");
       const extracted = await extractNotice(extractScript, localPath, extension);
+      this.app.log.info(
+        {
+          title: detail.title || fallbackTitle,
+          selectedFilename: primary.filename,
+          rawTextPreview: preview(extracted.rawText),
+          summaryPreview: preview(extracted.summaryText),
+        },
+        "collector.attachment.extracted",
+      );
+      this.app.log.info(
+        {
+          title: detail.title || fallbackTitle,
+          selectedFilename: primary.filename,
+          rawTextPreview: preview(extracted.rawText),
+          summaryPreview: preview(extracted.summaryText),
+        },
+        "collector.attachment.extracted",
+      );
       const normalizedText = normalizeNoticeText(extracted.normalizedText);
-      const summaryText = buildRuleBasedSummary({
+      const extractedSummary = normalizeNoticeText(extracted.summaryText ?? "");
+      const fallbackSummary = buildRuleBasedSummary({
         title: detail.title || fallbackTitle,
         postedAt: detail.postedAt,
         applyStartAt: detail.applyStartAt,
         applyEndAt: detail.applyEndAt,
         normalizedText,
       });
+      const summaryText = extractedSummary || fallbackSummary;
+
+      this.app.log.info(
+        {
+          title: detail.title || fallbackTitle,
+          selectedFilename: primary.filename,
+          normalizedPreview: preview(normalizedText),
+          finalSummaryPreview: preview(summaryText),
+        },
+        "collector.attachment.finalized",
+      );
+      this.app.log.info(
+        {
+          title: detail.title || fallbackTitle,
+          selectedFilename: primary.filename,
+          normalizedPreview: preview(normalizedText),
+          finalSummaryPreview: preview(summaryText),
+        },
+        "collector.attachment.finalized",
+      );
 
       return {
         primaryFilename: primary.filename,
@@ -314,7 +498,7 @@ export class CollectorService {
         rawText: extracted.rawText,
         normalizedText,
         summaryText,
-        textHash: `${normalizedText.length}`,
+        textHash: `${summaryText.length}:${normalizedText.length}`,
         localPath,
         downloadedAt: new Date(),
       };
@@ -391,3 +575,4 @@ export class CollectorService {
     });
   }
 }
+

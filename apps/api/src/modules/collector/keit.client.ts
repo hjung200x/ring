@@ -32,6 +32,62 @@ export interface KeitAnnouncementDetail {
 const cleanText = (value: string) =>
   value.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 
+const FILE_EXTENSIONS = ["hwp", "hwpx", "pdf", "zip"];
+const FILE_TEXT_PATTERN = new RegExp(
+  `>([^<>\n\r]+\.(?:${FILE_EXTENSIONS.join("|")}))<`,
+  "gi",
+);
+const DOWNLOAD_PATTERN = /f_itechFileDownload\('([^']+)',\s*'([^']+)'\)/g;
+
+const extractAttachmentFilename = (html: string, matchIndex: number): string | null => {
+  const windowStart = Math.max(0, matchIndex - 800);
+  const windowEnd = Math.min(html.length, matchIndex + 800);
+  const snippet = html.slice(windowStart, windowEnd);
+  const anchor = matchIndex - windowStart;
+
+  let best: { distance: number; filename: string } | null = null;
+  for (const candidate of snippet.matchAll(FILE_TEXT_PATTERN)) {
+    const filename = cleanText(candidate[1] ?? "");
+    if (!filename) {
+      continue;
+    }
+    const distance = Math.abs((candidate.index ?? 0) - anchor);
+    if (!best || distance < best.distance) {
+      best = { distance, filename };
+    }
+  }
+
+  return best?.filename ?? null;
+};
+
+const extractAttachments = (html: string): KeitAttachmentStub[] => {
+  const attachments: KeitAttachmentStub[] = [];
+  const seen = new Set<string>();
+
+  for (const match of html.matchAll(DOWNLOAD_PATTERN)) {
+    const atchDocId = match[1];
+    const atchFileId = match[2];
+    const key = `${atchDocId}:${atchFileId}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+
+    const filename = extractAttachmentFilename(html, match.index ?? 0);
+    if (!filename) {
+      continue;
+    }
+
+    attachments.push({
+      atchDocId,
+      atchFileId,
+      filename,
+    });
+  }
+
+  return attachments;
+};
+
 const parseApplyPeriod = (value: string | null): { start: Date | null; end: Date | null } => {
   if (!value) {
     return { start: null, end: null };
@@ -88,15 +144,7 @@ export class KeitClient {
     const periodMatch = html.match(/<span class="label">접수기간<\/span>\s*<span class="val">([\s\S]*?)<\/span>/i);
     const postedMatch = html.match(/<span class="label">등록일<\/span>\s*<span class="val">([\s\S]*?)<\/span>/i);
     const badgeMatch = html.match(/badge[^>]*">([^<]+)<\/span>/i);
-    const attachments: KeitAttachmentStub[] = [];
-    const attachmentPattern = /f_itechFileDownload\('([^']+)',\s*'([^']+)'\)[\s\S]*?<span>([\s\S]*?)<\/span>/g;
-    for (const match of html.matchAll(attachmentPattern)) {
-      attachments.push({
-        atchDocId: match[1],
-        atchFileId: match[2],
-        filename: cleanText(match[3]),
-      });
-    }
+    const attachments = extractAttachments(html);
     const periodText = periodMatch ? cleanText(periodMatch[1]) : null;
     const period = parseApplyPeriod(periodText);
 

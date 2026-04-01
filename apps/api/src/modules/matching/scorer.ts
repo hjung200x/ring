@@ -1,34 +1,31 @@
 import type { AnnouncementScoreResult, KeywordFilterResult } from "@ring/types";
 
-const average = (values: number[]) =>
-  values.length === 0 ? null : values.reduce((sum, value) => sum + value, 0) / values.length;
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+
+const calculateKeywordScore = (keyword: KeywordFilterResult) => {
+  const hitCount = keyword.includeHits.length;
+  if (hitCount <= 0) return 0;
+  if (hitCount === 1) return 0.4;
+  if (hitCount === 2) return 0.7;
+  return 1;
+};
 
 export const calculateAnnouncementScore = (input: {
   keyword: KeywordFilterResult;
   profileSimilarity: number | null;
-  exampleSimilarities: number[];
   threshold: number;
 }): AnnouncementScoreResult => {
-  const keywordBoost = Math.min(0.1, input.keyword.includeHits.length * 0.03);
-  const excludePenalty = Math.min(0.2, input.keyword.excludeHits.length * 0.08);
-  const exampleMax =
-    input.exampleSimilarities.length === 0 ? null : Math.max(...input.exampleSimilarities);
-  const exampleAverage = average(input.exampleSimilarities);
-  const fallback = input.profileSimilarity ?? 0;
-  const finalScore =
-    0.4 * fallback +
-    0.45 * (exampleMax ?? fallback) +
-    0.15 * (exampleAverage ?? fallback) +
-    keywordBoost -
-    excludePenalty;
+  const keywordScore = calculateKeywordScore(input.keyword);
+  const excludePenalty = Math.min(0.3, input.keyword.excludeHits.length * 0.12);
+  const profileSimilarity = input.profileSimilarity ?? 0;
+
+  const finalScore = clamp01(0.75 * profileSimilarity + 0.25 * keywordScore - excludePenalty);
 
   return {
     ...input.keyword,
     profileSimilarity: input.profileSimilarity,
-    exampleMaxSimilarity: exampleMax,
-    exampleAvgSimilarity: exampleAverage,
     finalScore,
     decision: finalScore >= input.threshold ? "notify" : "skip",
-    scorerVersion: "v1.0.0",
+    scorerVersion: "v1.3.0",
   };
 };
