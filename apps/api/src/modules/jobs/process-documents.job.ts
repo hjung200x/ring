@@ -1,7 +1,8 @@
-﻿import { createHash } from "node:crypto";
+import { createHash } from "node:crypto";
 import { statSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { FastifyInstance } from "fastify";
 import { ensureStoragePath } from "../../config/paths.js";
 import { KeitClient } from "../collector/keit.client.js";
@@ -9,7 +10,8 @@ import { extractNotice } from "../documents/extractor-bridge.js";
 import { normalizeNoticeText } from "../documents/normalizer.js";
 import { buildRuleBasedSummary } from "../documents/summarizer.js";
 
-const EXTRACTOR_MARKER = 'ring-extractor-bodytext-hwp-v2';
+const EXTRACTOR_MARKER = "ring-extractor-bodytext-hwp-v2";
+const apiRoot = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const PREVIEW_LIMIT = 240;
 const preview = (value: string | null | undefined) =>
   (value ?? "").replace(/\s+/g, " ").trim().slice(0, PREVIEW_LIMIT);
@@ -46,7 +48,7 @@ export const processDocumentsJob = async (app: FastifyInstance) => {
     take: 20,
   });
 
-  const scriptsRoot = resolve(process.cwd(), "scripts");
+  const scriptsRoot = resolve(apiRoot, "scripts");
   const extractScript = resolve(scriptsRoot, "extract_notice.py");
   const scriptMtime = statSync(extractScript).mtime.toISOString();
 
@@ -57,7 +59,7 @@ export const processDocumentsJob = async (app: FastifyInstance) => {
       scriptMtime,
       attachmentCount: attachments.length,
     },
-    'process-documents.extractor.marker',
+    "process-documents.extractor.marker",
   );
 
   for (const attachment of attachments) {
