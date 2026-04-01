@@ -1,7 +1,7 @@
 ﻿import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import type { SessionUserDto } from '@ring/types';
-import { apiFetch } from '../lib/api-client.js';
+import { apiFetch, apiPath } from '../lib/api-client.js';
 import { AdminPage } from './AdminPage.js';
 import { AdminUserDetailPage } from './AdminUserDetailPage.js';
 import { ChangePasswordPage } from './ChangePasswordPage.js';
@@ -16,7 +16,7 @@ const useSessionUser = () =>
   useQuery({
     queryKey: ['session-user'],
     queryFn: async (): Promise<SessionUserDto | null> => {
-      const response = await fetch('/api/me', {
+      const response = await fetch(apiPath('/api/me'), {
         credentials: 'include',
       });
 

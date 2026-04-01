@@ -1,0 +1,16 @@
+[Unit]
+Description=RING API service
+After=network.target
+
+[Service]
+Type=simple
+User=ring
+Group=ring
+WorkingDirectory=/srv/ring
+EnvironmentFile=/etc/ring/ring.env
+ExecStart=/usr/bin/node /srv/ring/apps/api/dist/server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

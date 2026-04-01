@@ -6,11 +6,16 @@ import { AppRouter } from './pages/AppRouter.js';
 import './styles.css';
 
 const queryClient = new QueryClient();
+const routerBase = (() => {
+  const base = import.meta.env.BASE_URL || '/';
+  if (base === '/') return undefined;
+  return base.endsWith('/') ? base.slice(0, -1) : base;
+})();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={routerBase}>
         <AppRouter />
       </BrowserRouter>
     </QueryClientProvider>
