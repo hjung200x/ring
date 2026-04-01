@@ -1,0 +1,15 @@
+node_modules
+.pnpm-store
+.git
+.run
+log
+apps/api/node_modules
+apps/web/node_modules
+packages/types/node_modules
+packages/schemas/node_modules
+apps/api/dist
+apps/web/dist
+apps/api/prisma/prisma
+apps/api/storage
+apps/api/scripts/__pycache__
+*.pyc
