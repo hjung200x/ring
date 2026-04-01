@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NotificationDetailDto, NotificationListItemDto } from '@ring/types';
 import { apiFetch } from '../lib/api-client.js';
 import { NotificationDetailPanel, NotificationListCard } from './notifications-ui.js';
@@ -12,6 +12,7 @@ interface NotificationListResponse {
 export const NotificationListPage = () => {
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const listQuery = useQuery({
     queryKey: ['notifications', filter],
@@ -39,6 +40,23 @@ export const NotificationListPage = () => {
     queryFn: () => apiFetch(`/api/notifications/${selectedId}`) as Promise<NotificationDetailDto>,
     enabled: Boolean(selectedId),
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (notificationId: string) =>
+      apiFetch(`/api/notifications/${notificationId}`, { method: 'DELETE' }),
+    onSuccess: async (_, deletedId) => {
+      await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      await queryClient.invalidateQueries({ queryKey: ['notification', deletedId] });
+      if (selectedId === deletedId) {
+        setSelectedId(null);
+      }
+    },
+  });
+
+  const handleDelete = (notificationId: string) => {
+    if (!window.confirm('이 공고알림을 삭제하시겠습니까?')) return;
+    deleteMutation.mutate(notificationId);
+  };
 
   return (
     <section className='notifications-shell'>
@@ -83,7 +101,13 @@ export const NotificationListPage = () => {
 
           <div className='notifications-list'>
             {items.map((item) => (
-              <NotificationListCard key={item.id} item={item} selected={item.id === selectedId} onSelect={setSelectedId} />
+              <NotificationListCard
+                key={item.id}
+                item={item}
+                selected={item.id === selectedId}
+                onSelect={setSelectedId}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
         </div>
@@ -96,7 +120,7 @@ export const NotificationListPage = () => {
               <p>{'\uBAA9\uB85D\uC5D0\uC11C \uACF5\uACE0\uB97C \uC120\uD0DD\uD558\uBA74 \uC0C1\uC138 \uB0B4\uC6A9\uC744 \uBCFC \uC218 \uC788\uC2B5\uB2C8\uB2E4.'}</p>
             </div>
           ) : null}
-          {detailQuery.data ? <NotificationDetailPanel detail={detailQuery.data} /> : null}
+          {detailQuery.data ? <NotificationDetailPanel detail={detailQuery.data} onDelete={handleDelete} /> : null}
         </div>
       </div>
     </section>

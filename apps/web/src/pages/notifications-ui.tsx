@@ -49,10 +49,12 @@ export const NotificationListCard = ({
   item,
   selected,
   onSelect,
+  onDelete,
 }: {
   item: NotificationListItemDto;
   selected: boolean;
   onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
 }) => {
   const isDeadlineImminent =
     item.applyEndAt !== null && new Date(item.applyEndAt).getTime() - Date.now() < 1000 * 60 * 60 * 24 * 7;
@@ -72,7 +74,23 @@ export const NotificationListCard = ({
           <span className='profile-badge'>{item.profileName}</span>
           {isDeadlineImminent ? <span className='deadline-badge'>{'마감임박'}</span> : null}
         </div>
-        <span className='meta-date'>{formatDate(item.createdAt)}</span>
+        <div className='notification-card-meta-side'>
+          <span className='meta-date'>{formatDate(item.createdAt)}</span>
+          <button
+            type='button'
+            className='icon-action-button'
+            aria-label='알림 삭제'
+            title='알림 삭제'
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(item.id);
+            }}
+          >
+            <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false'>
+              <path d='M9 3h6l1 2h4v2H4V5h4l1-2Zm1 6h2v8h-2V9Zm4 0h2v8h-2V9ZM7 9h2v8H7V9Zm1 11a2 2 0 0 1-2-2V7h12v11a2 2 0 0 1-2 2H8Z' />
+            </svg>
+          </button>
+        </div>
       </div>
       <h3 className='notification-card-title'>{item.title}</h3>
       <p className='notification-card-summary'>{summaryPreview(item.summary)}</p>
@@ -89,9 +107,11 @@ export const NotificationListCard = ({
 export const NotificationDetailPanel = ({
   detail,
   backLink,
+  onDelete,
 }: {
   detail: NotificationDetailDto;
   backLink?: string;
+  onDelete?: (id: string) => void;
 }) => (
   <section className='notification-detail-panel'>
     {backLink ? (
@@ -106,10 +126,25 @@ export const NotificationDetailPanel = ({
       <div className='detail-hero'>
         <div className='detail-hero-glow detail-hero-glow-a' />
         <div className='detail-hero-glow detail-hero-glow-b' />
-        <div className='detail-badges'>
-          <span className={scoreClass(detail.reason.finalScore)}>
-            {'추천 점수'} {scoreLabel(detail.reason.finalScore)} {detail.reason.finalScore.toFixed(3)}
-          </span>
+        <div className='detail-hero-top'>
+          <div className='detail-badges'>
+            <span className={scoreClass(detail.reason.finalScore)}>
+              {'추천 점수'} {scoreLabel(detail.reason.finalScore)} {detail.reason.finalScore.toFixed(3)}
+            </span>
+          </div>
+          {onDelete ? (
+            <button
+              type='button'
+              className='icon-action-button detail-delete-button'
+              aria-label='알림 삭제'
+              title='알림 삭제'
+              onClick={() => onDelete(detail.id)}
+            >
+              <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false'>
+                <path d='M9 3h6l1 2h4v2H4V5h4l1-2Zm1 6h2v8h-2V9Zm4 0h2v8h-2V9ZM7 9h2v8H7V9Zm1 11a2 2 0 0 1-2-2V7h12v11a2 2 0 0 1-2 2H8Z' />
+              </svg>
+            </button>
+          ) : null}
         </div>
         <h1 className='detail-title'>{detail.title}</h1>
         <div className='detail-meta-grid'>

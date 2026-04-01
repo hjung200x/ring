@@ -31,4 +31,14 @@ export const notificationRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(204).send();
     },
   );
+
+  app.delete(
+    "/:notificationId",
+    { preHandler: app.requireSession },
+    async (request, reply) => {
+      const { notificationId } = request.params as { notificationId: string };
+      await service.delete(await getSharedOwnerId(app), notificationId);
+      return reply.status(204).send();
+    },
+  );
 };

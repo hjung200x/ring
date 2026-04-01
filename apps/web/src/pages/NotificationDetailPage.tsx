@@ -1,28 +1,46 @@
-import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+ï»¿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
 import type { NotificationDetailDto } from '@ring/types';
 import { apiFetch } from '../lib/api-client.js';
 import { NotificationDetailPanel } from './notifications-ui.js';
 
 export const NotificationDetailPage = () => {
   const params = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const query = useQuery({
     queryKey: ['notification', params.notificationId],
     queryFn: () => apiFetch(`/api/notifications/${params.notificationId}`) as Promise<NotificationDetailDto>,
     enabled: Boolean(params.notificationId),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (notificationId: string) =>
+      apiFetch(`/api/notifications/${notificationId}`, { method: 'DELETE' }),
+    onSuccess: async (_, deletedId) => {
+      await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      await queryClient.invalidateQueries({ queryKey: ['notification', deletedId] });
+      navigate('/notifications');
+    },
+  });
+
+  const handleDelete = (notificationId: string) => {
+    if (!window.confirm('ì´ ê³µê³ ì•Œë¦¼ì„ ì‚­ì œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?')) return;
+    deleteMutation.mutate(notificationId);
+  };
+
   if (query.isLoading) {
-    return <div className='empty-detail standalone-detail'>»ó¼¼ ³»¿ëÀ» ºÒ·¯¿À´Â ÁßÀÔ´Ï´Ù...</div>;
+    return <div className='empty-detail standalone-detail'>ìƒì„¸ ë‚´ìš©ì„ ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘ì…ë‹ˆë‹¤...</div>;
   }
 
   if (query.isError || !query.data) {
-    return <div className='empty-detail standalone-detail'>»ó¼¼ ³»¿ëÀ» ºÒ·¯¿ÀÁö ¸øÇß½À´Ï´Ù.</div>;
+    return <div className='empty-detail standalone-detail'>ìƒì„¸ ë‚´ìš©ì„ ë¶ˆëŸ¬ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.</div>;
   }
 
   return (
     <div className='standalone-detail'>
-      <NotificationDetailPanel detail={query.data} backLink='/notifications' />
+      <NotificationDetailPanel detail={query.data} backLink='/notifications' onDelete={handleDelete} />
     </div>
   );
 };
