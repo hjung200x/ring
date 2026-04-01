@@ -31,6 +31,7 @@ export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   DATABASE_URL: z.string().default(canonicalDatabaseUrl).transform(normalizeDatabaseUrl),
   COOKIE_SECRET: z.string().default("dev-cookie-secret"),
+  COOKIE_SECURE: z.coerce.boolean().default(false),
   CORS_ORIGIN: z.string().default("http://127.0.0.1:5173"),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),

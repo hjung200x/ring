@@ -95,7 +95,7 @@ export const registerAuthSession = fp(async (app) => {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      secure: app.config.NODE_ENV === "production",
+      secure: app.config.COOKIE_SECURE,
       expires: expiresAt,
     });
   });
