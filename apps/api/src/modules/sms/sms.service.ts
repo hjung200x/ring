@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { SolapiMessageService } from "solapi";
 import { getSharedOwnerId } from "../../lib/shared-scope.js";
 
-const SMS_MESSAGE_PREFIX = "\uAC80\uC0C9 \uC870\uAC74\uC5D0 \uB9DE\uB294 \uACF5\uACE0\uBB38 ";
+const SMS_MESSAGE_PREFIX = "<RING - \uACF5\uACE0\uC54C\uB9AC\uBBF8> \uAC80\uC0C9 \uC870\uAC74\uC5D0 \uB9DE\uB294 \uACF5\uACE0\uBB38 ";
 const SMS_MESSAGE_SUFFIX = "\uAC74\uC744 \uCC3E\uC558\uC2B5\uB2C8\uB2E4.";
 
 export class SmsService {
