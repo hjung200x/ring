@@ -16,6 +16,7 @@ import { authRoutes } from "./modules/auth/auth.routes.js";
 import { internalJobRoutes } from "./modules/internal-jobs/internal-jobs.routes.js";
 import { interestProfileRoutes } from "./modules/interest-profiles/interest-profiles.routes.js";
 import { notificationRoutes } from "./modules/notifications/notifications.routes.js";
+import { smsRecipientsRoutes } from "./modules/sms-recipients/sms-recipients.routes.js";
 import { registerAuthSession } from "./plugins/auth-session.js";
 import { registerPrisma } from "./plugins/prisma.js";
 
@@ -69,6 +70,7 @@ export const buildApp = async () => {
   await app.register(adminUsersRoutes, { prefix: "/api/admin/users" });
   await app.register(interestProfileRoutes, { prefix: "/api/profiles" });
   await app.register(notificationRoutes, { prefix: "/api/notifications" });
+  await app.register(smsRecipientsRoutes, { prefix: "/api/sms-recipients" });
   await app.register(internalJobRoutes, { prefix: "/internal/jobs" });
 
   app.get("/api/me", { preHandler: app.requireSession }, async (request) => {

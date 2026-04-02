@@ -28,6 +28,34 @@ model User {
   notifications  Notification[]
 }
 
+model SmsRecipient {
+  id           String       @id @default(uuid())
+  name         String
+  phoneNumber  String       @unique
+  enabled      Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  dispatches   SmsDispatch[]
+}
+
+model SmsDispatch {
+  id                String       @id @default(uuid())
+  batchKey          String
+  recipientId       String
+  notificationCount Int
+  messageText       String
+  status            String
+  provider          String
+  providerMessageId String?
+  providerGroupId   String?
+  errorMessage      String?
+  createdAt         DateTime     @default(now())
+  sentAt            DateTime?
+  recipient         SmsRecipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([batchKey, recipientId])
+}
+
 model AuthSession {
   id               String   @id @default(uuid())
   userId           String

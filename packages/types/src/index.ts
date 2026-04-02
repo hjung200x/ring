@@ -23,6 +23,27 @@ export interface UserScheduleDto {
   nextRunAt: string | null;
 }
 
+export interface SmsRecipientDto {
+  id: string;
+  name: string;
+  phoneNumber: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SmsRecipientCreateInput {
+  name: string;
+  phoneNumber: string;
+  enabled?: boolean;
+}
+
+export interface SmsRecipientUpdateInput {
+  name: string;
+  phoneNumber: string;
+  enabled: boolean;
+}
+
 export interface SessionUserDto {
   id: string;
   username: string;

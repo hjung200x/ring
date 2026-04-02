@@ -1,9 +1,10 @@
-﻿import type { FastifyInstance } from 'fastify';
-import { getSharedOwnerId } from './shared-scope.js';
-import { collectAnnouncementsJob } from '../modules/jobs/collect-announcements.job.js';
-import { processDocumentsJob } from '../modules/jobs/process-documents.job.js';
-import { scoreNotificationsJob } from '../modules/jobs/score-notifications.job.js';
-import { calculateNextRunAt } from './user-schedule.js';
+import { randomUUID } from "node:crypto";
+import type { FastifyInstance } from "fastify";
+import { collectAnnouncementsJob } from "../modules/jobs/collect-announcements.job.js";
+import { processDocumentsJob } from "../modules/jobs/process-documents.job.js";
+import { scoreNotificationsJob } from "../modules/jobs/score-notifications.job.js";
+import { calculateNextRunAt } from "./user-schedule.js";
+import { getSharedOwnerId } from "./shared-scope.js";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -13,11 +14,12 @@ export const runScheduledPipelineForUsers = async (
   reason: string,
 ) => {
   const sharedOwnerId = await getSharedOwnerId(app);
+  const batchKey = randomUUID();
 
-  app.log.info({ reason, sharedOwnerId }, 'scheduled pipeline started');
+  app.log.info({ reason, sharedOwnerId, batchKey }, "scheduled pipeline started");
   await collectAnnouncementsJob(app);
   await processDocumentsJob(app);
-  await scoreNotificationsJob(app, { userIds: [sharedOwnerId] });
+  await scoreNotificationsJob(app, { userIds: [sharedOwnerId], batchKey });
 
   const sharedOwner = await app.prisma.user.findUniqueOrThrow({
     where: { id: sharedOwnerId },
@@ -30,16 +32,16 @@ export const runScheduledPipelineForUsers = async (
     data: {
       lastRunAt: now,
       nextRunAt: sharedOwner.scheduleEnabled
-        ? calculateNextRunAt(sharedOwner.scheduleUnit as 'week' | 'day' | 'hour', sharedOwner.scheduleValue, now)
+        ? calculateNextRunAt(sharedOwner.scheduleUnit as "week" | "day" | "hour", sharedOwner.scheduleValue, now)
         : null,
     },
   });
 
-  app.log.info({ reason, sharedOwnerId }, 'scheduled pipeline finished');
+  app.log.info({ reason, sharedOwnerId, batchKey }, "scheduled pipeline finished");
 };
 
 export const registerHourlyJobs = (app: FastifyInstance) => {
-  if (!app.config.JOB_ENABLED || app.config.NODE_ENV === 'test') {
+  if (!app.config.JOB_ENABLED || app.config.NODE_ENV === "test") {
     return;
   }
 
@@ -62,9 +64,9 @@ export const registerHourlyJobs = (app: FastifyInstance) => {
         return;
       }
 
-      await runScheduledPipelineForUsers(app, [sharedOwnerId], 'hourly-tick');
+      await runScheduledPipelineForUsers(app, [sharedOwnerId], "hourly-tick");
     } catch (error) {
-      app.log.error(error, 'hourly jobs failed');
+      app.log.error(error, "hourly jobs failed");
     }
   };
 

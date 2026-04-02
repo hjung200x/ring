@@ -1,20 +1,24 @@
-﻿import type { FastifyInstance } from "fastify";
+import { randomUUID } from "node:crypto";
+import type { FastifyInstance } from "fastify";
 import { buildEmbeddingSource } from "../documents/normalizer.js";
 import { EmbeddingsService } from "../embeddings/embeddings.service.js";
 import { runKeywordFilter } from "../matching/keyword-filter.js";
 import { buildProfileSource, toEmbeddingVector } from "../matching/profile-source.js";
 import { calculateAnnouncementScore } from "../matching/scorer.js";
+import { SmsService } from "../sms/sms.service.js";
 
 export const scoreNotificationsJob = async (
   app: FastifyInstance,
-  options?: { userIds?: string[] },
+  options?: { userIds?: string[]; batchKey?: string },
 ) => {
   if (!app.config.OPENAI_API_KEY) {
     app.log.warn("OPENAI_API_KEY is missing; skipping score-notifications job");
     return;
   }
 
+  const batchKey = options?.batchKey ?? randomUUID();
   const embeddings = new EmbeddingsService(app);
+  const smsService = new SmsService(app);
   const documents = await app.prisma.document.findMany({
     where: { extractionStatus: "success" },
     include: {
@@ -30,6 +34,7 @@ export const scoreNotificationsJob = async (
     },
     include: { user: true, profileEmbedding: true },
   });
+  let newNotificationCount = 0;
 
   for (const document of documents) {
     const embeddingBody = document.summaryText?.trim() || (document.normalizedText ?? "");
@@ -93,7 +98,7 @@ export const scoreNotificationsJob = async (
       const result = calculateAnnouncementScore({
         keyword,
         profileSimilarity,
-        threshold: Math.min(Number(profile.similarityThreshold), 0.7),
+        threshold: Math.min(Number(profile.similarityThreshold), 0.6),
       });
 
       const score = await app.prisma.score.upsert({
@@ -132,6 +137,11 @@ export const scoreNotificationsJob = async (
       }
 
       const dedupeKey = `${profile.userId}:${profile.id}:${document.announcementId}:${result.scorerVersion}`;
+      const existingNotification = await app.prisma.notification.findUnique({
+        where: { dedupeKey },
+        select: { id: true },
+      });
+
       await app.prisma.notification.upsert({
         where: { dedupeKey },
         update: {
@@ -159,11 +169,23 @@ export const scoreNotificationsJob = async (
           dedupeKey,
         },
       });
+
+      if (!existingNotification) {
+        newNotificationCount += 1;
+      }
     }
   }
 
+  await smsService.dispatchBatch(batchKey, newNotificationCount);
+
   app.log.info(
-    { documents: documents.length, profiles: profiles.length, filteredUsers: options?.userIds?.length ?? 0 },
+    {
+      documents: documents.length,
+      profiles: profiles.length,
+      filteredUsers: options?.userIds?.length ?? 0,
+      batchKey,
+      newNotificationCount,
+    },
     "score-notifications job finished",
   );
 };

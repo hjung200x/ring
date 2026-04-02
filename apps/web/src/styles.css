@@ -919,6 +919,73 @@ button {
 .schedule-page-card {
   max-width: 980px;
 }
+.schedule-page-surface {
+  max-width: 1220px;
+}
+
+.schedule-page-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(360px, 1.05fr);
+  gap: 18px;
+}
+
+.sms-recipient-card {
+  display: grid;
+  gap: 18px;
+}
+
+.sms-recipient-list {
+  display: grid;
+  gap: 12px;
+}
+
+.sms-recipient-item,
+.sms-recipient-create,
+.sms-recipient-empty {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(114, 92, 67, 0.1);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.sms-recipient-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sms-recipient-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(47, 58, 55, 0.72);
+}
+
+.sms-recipient-edit-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.sms-recipient-create {
+  display: grid;
+  gap: 14px;
+}
+
+.sms-recipient-create h3 {
+  margin: 0;
+}
+
+.sms-recipient-create-toggle {
+  width: fit-content;
+}
+
+.sms-recipient-empty {
+  color: rgba(47, 58, 55, 0.72);
+}
 .admin-surface {
   max-width: 1180px;
 }
@@ -996,6 +1063,11 @@ button {
 @media (max-width: 900px) {
   .admin-grid,
   .admin-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-page-grid,
+  .sms-recipient-edit-grid {
     grid-template-columns: 1fr;
   }
 }

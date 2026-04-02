@@ -56,6 +56,18 @@ export const adminUserPasswordSchema = z.object({
   password: z.string().min(8),
 });
 
+export const smsRecipientCreateSchema = z.object({
+  name: z.string().min(1).max(100),
+  phoneNumber: z.string().min(1).max(30),
+  enabled: z.boolean().optional(),
+});
+
+export const smsRecipientUpdateSchema = z.object({
+  name: z.string().min(1).max(100),
+  phoneNumber: z.string().min(1).max(30),
+  enabled: z.boolean(),
+});
+
 export const manualExampleSchema = z.object({
   title: z.string().min(1).max(255),
   text: z.string().min(1),
@@ -71,6 +83,8 @@ export type ScheduleUpdateRequest = z.infer<typeof scheduleUpdateSchema>;
 export type AdminUserCreateRequest = z.infer<typeof adminUserCreateSchema>;
 export type AdminUserUpdateRequest = z.infer<typeof adminUserUpdateSchema>;
 export type AdminUserPasswordRequest = z.infer<typeof adminUserPasswordSchema>;
+export type SmsRecipientCreateRequest = z.infer<typeof smsRecipientCreateSchema>;
+export type SmsRecipientUpdateRequest = z.infer<typeof smsRecipientUpdateSchema>;
 export type ManualExampleRequest = z.infer<typeof manualExampleSchema>;
 export type FromAnnouncementExampleRequest = z.infer<
   typeof fromAnnouncementExampleSchema
