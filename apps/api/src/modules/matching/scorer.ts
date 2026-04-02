@@ -19,13 +19,13 @@ export const calculateAnnouncementScore = (input: {
   const excludePenalty = Math.min(0.3, input.keyword.excludeHits.length * 0.12);
   const profileSimilarity = input.profileSimilarity ?? 0;
 
-  const finalScore = clamp01(0.75 * profileSimilarity + 0.25 * keywordScore - excludePenalty);
+  const finalScore = clamp01(0.9 * profileSimilarity + 0.1 * keywordScore - excludePenalty);
 
   return {
     ...input.keyword,
     profileSimilarity: input.profileSimilarity,
     finalScore,
     decision: finalScore >= input.threshold ? "notify" : "skip",
-    scorerVersion: "v1.3.0",
+    scorerVersion: "v1.4.0",
   };
 };

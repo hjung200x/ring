@@ -101,7 +101,7 @@ export interface AnnouncementScoreResult extends KeywordFilterResult {
   profileSimilarity: number | null;
   finalScore: number | null;
   decision: "skip" | "notify";
-  scorerVersion: "v1.3.0";
+  scorerVersion: "v1.4.0";
 }
 
 export interface NotificationReason {
