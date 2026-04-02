@@ -18,12 +18,19 @@ export const calculateAnnouncementScore = (input: {
   const keywordScore = calculateKeywordScore(input.keyword);
   const excludePenalty = Math.min(0.3, input.keyword.excludeHits.length * 0.12);
   const profileSimilarity = input.profileSimilarity ?? 0;
+  const weightedProfileScore = 0.9 * profileSimilarity;
+  const weightedKeywordScore = 0.1 * keywordScore;
 
-  const finalScore = clamp01(0.9 * profileSimilarity + 0.1 * keywordScore - excludePenalty);
+  const finalScore = clamp01(weightedProfileScore + weightedKeywordScore - excludePenalty);
 
   return {
     ...input.keyword,
     profileSimilarity: input.profileSimilarity,
+    keywordScore,
+    excludePenalty,
+    weightedProfileScore,
+    weightedKeywordScore,
+    threshold: input.threshold,
     finalScore,
     decision: finalScore >= input.threshold ? "notify" : "skip",
     scorerVersion: "v1.4.0",

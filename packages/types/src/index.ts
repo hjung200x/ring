@@ -99,6 +99,11 @@ export interface KeywordFilterResult {
 
 export interface AnnouncementScoreResult extends KeywordFilterResult {
   profileSimilarity: number | null;
+  keywordScore: number;
+  excludePenalty: number;
+  weightedProfileScore: number;
+  weightedKeywordScore: number;
+  threshold: number;
   finalScore: number | null;
   decision: "skip" | "notify";
   scorerVersion: "v1.4.0";
@@ -109,6 +114,12 @@ export interface NotificationReason {
   excludeHits: string[];
   finalScore: number;
   profileSimilarity: number | null;
+  keywordScore?: number;
+  excludePenalty?: number;
+  weightedProfileScore?: number;
+  weightedKeywordScore?: number;
+  threshold?: number;
+  scorerVersion?: string;
 }
 
 export interface NotificationListItemDto {

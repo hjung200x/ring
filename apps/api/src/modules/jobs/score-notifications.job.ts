@@ -101,6 +101,30 @@ export const scoreNotificationsJob = async (
         threshold: Math.min(Number(profile.similarityThreshold), 0.6),
       });
 
+      app.log.info(
+        {
+          batchKey,
+          announcementId: document.announcementId,
+          source: document.announcement.source,
+          sourceAncmId: document.announcement.sourceAncmId,
+          sourceBsnsYy: document.announcement.sourceBsnsYy,
+          profileId: profile.id,
+          profileName: profile.name,
+          threshold: result.threshold,
+          profileSimilarity: result.profileSimilarity,
+          includeHits: result.includeHits,
+          excludeHits: result.excludeHits,
+          keywordScore: result.keywordScore,
+          excludePenalty: result.excludePenalty,
+          weightedProfileScore: result.weightedProfileScore,
+          weightedKeywordScore: result.weightedKeywordScore,
+          finalScore: result.finalScore,
+          decision: result.decision,
+          scorerVersion: result.scorerVersion,
+        },
+        "score.decision",
+      );
+
       const score = await app.prisma.score.upsert({
         where: {
           profileId_announcementId_scorerVersion: {
@@ -151,6 +175,12 @@ export const scoreNotificationsJob = async (
             excludeHits: result.excludeHits,
             finalScore: result.finalScore,
             profileSimilarity: result.profileSimilarity,
+            keywordScore: result.keywordScore,
+            excludePenalty: result.excludePenalty,
+            weightedProfileScore: result.weightedProfileScore,
+            weightedKeywordScore: result.weightedKeywordScore,
+            threshold: result.threshold,
+            scorerVersion: result.scorerVersion,
           },
         },
         create: {
@@ -165,6 +195,12 @@ export const scoreNotificationsJob = async (
             excludeHits: result.excludeHits,
             finalScore: result.finalScore,
             profileSimilarity: result.profileSimilarity,
+            keywordScore: result.keywordScore,
+            excludePenalty: result.excludePenalty,
+            weightedProfileScore: result.weightedProfileScore,
+            weightedKeywordScore: result.weightedKeywordScore,
+            threshold: result.threshold,
+            scorerVersion: result.scorerVersion,
           },
           dedupeKey,
         },
@@ -172,6 +208,19 @@ export const scoreNotificationsJob = async (
 
       if (!existingNotification) {
         newNotificationCount += 1;
+      } else {
+        app.log.info(
+          {
+            batchKey,
+            announcementId: document.announcementId,
+            profileId: profile.id,
+            notificationId: existingNotification.id,
+            dedupeKey,
+            finalScore: result.finalScore,
+            scorerVersion: result.scorerVersion,
+          },
+          "notification.dedupe.skipped",
+        );
       }
     }
   }
