@@ -2,24 +2,8 @@
 import { buildEmbeddingSource } from "../documents/normalizer.js";
 import { EmbeddingsService } from "../embeddings/embeddings.service.js";
 import { runKeywordFilter } from "../matching/keyword-filter.js";
+import { buildProfileSource, toEmbeddingVector } from "../matching/profile-source.js";
 import { calculateAnnouncementScore } from "../matching/scorer.js";
-
-const buildProfileSource = (profile: {
-  name: string;
-  description: string;
-  includeKeywordsJson: unknown;
-}) => {
-  const includeKeywords = Array.isArray(profile.includeKeywordsJson)
-    ? profile.includeKeywordsJson.map(String)
-    : [];
-  return [
-    `검색조건 이름: ${profile.name}`,
-    `설명: ${profile.description}`,
-    includeKeywords.length ? `포함 키워드: ${includeKeywords.join(", ")}` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
-};
 
 export const scoreNotificationsJob = async (
   app: FastifyInstance,
@@ -44,7 +28,7 @@ export const scoreNotificationsJob = async (
       enabled: true,
       ...(options?.userIds?.length ? { userId: { in: options.userIds } } : {}),
     },
-    include: { user: true },
+    include: { user: true, profileEmbedding: true },
   });
 
   for (const document of documents) {
@@ -80,7 +64,30 @@ export const scoreNotificationsJob = async (
         continue;
       }
 
-      const profileEmbedding = await embeddings.embedText(buildProfileSource(profile));
+      const profileSource = buildProfileSource(profile);
+      const profileEmbedding =
+        profile.profileEmbedding &&
+        profile.profileEmbedding.embeddingModel === app.config.OPENAI_EMBEDDING_MODEL &&
+        profile.profileEmbedding.sourceText === profileSource
+          ? toEmbeddingVector(profile.profileEmbedding.embeddingJson)
+          : await (async () => {
+              const embedding = await embeddings.embedText(profileSource);
+              await app.prisma.profileEmbedding.upsert({
+                where: { profileId: profile.id },
+                update: {
+                  embeddingModel: app.config.OPENAI_EMBEDDING_MODEL,
+                  sourceText: profileSource,
+                  embeddingJson: embedding,
+                },
+                create: {
+                  profileId: profile.id,
+                  embeddingModel: app.config.OPENAI_EMBEDDING_MODEL,
+                  sourceText: profileSource,
+                  embeddingJson: embedding,
+                },
+              });
+              return embedding;
+            })();
       const profileSimilarity = embeddings.cosineSimilarity(announcementEmbedding, profileEmbedding);
 
       const result = calculateAnnouncementScore({
