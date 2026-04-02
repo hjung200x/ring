@@ -106,7 +106,7 @@ export interface AnnouncementScoreResult extends KeywordFilterResult {
   threshold: number;
   finalScore: number | null;
   decision: "skip" | "notify";
-  scorerVersion: "v1.4.0";
+  scorerVersion: "v1.5.0";
 }
 
 export interface NotificationReason {

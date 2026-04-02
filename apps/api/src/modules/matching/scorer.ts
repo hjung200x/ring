@@ -16,7 +16,7 @@ export const calculateAnnouncementScore = (input: {
   threshold: number;
 }): AnnouncementScoreResult => {
   const keywordScore = calculateKeywordScore(input.keyword);
-  const excludePenalty = Math.min(0.3, input.keyword.excludeHits.length * 0.12);
+  const excludePenalty = 0;
   const profileSimilarity = input.profileSimilarity ?? 0;
   const weightedProfileScore = 0.9 * profileSimilarity;
   const weightedKeywordScore = 0.1 * keywordScore;
@@ -33,6 +33,6 @@ export const calculateAnnouncementScore = (input: {
     threshold: input.threshold,
     finalScore,
     decision: finalScore >= input.threshold ? "notify" : "skip",
-    scorerVersion: "v1.4.0",
+    scorerVersion: "v1.5.0",
   };
 };
