@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,13 +10,26 @@ import { extractNotice } from "../documents/extractor-bridge.js";
 import { normalizeNoticeText } from "../documents/normalizer.js";
 import { buildRuleBasedSummary } from "../documents/summarizer.js";
 
-const EXTRACTOR_MARKER = "ring-extractor-bodytext-hwp-v3";
-const EXTRACTOR_SOURCE_FINGERPRINT = "ring-source-2026-04-02-a";
-const apiRoot = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
+const EXTRACTOR_MARKER = "ring-extractor-bodytext-hwp-v4";
+const EXTRACTOR_SOURCE_FINGERPRINT = "ring-source-2026-04-02-b";
+const moduleDir = fileURLToPath(new URL(".", import.meta.url));
+const scriptRootCandidates = [
+  resolve(moduleDir, "../../../../../scripts"),
+  resolve(moduleDir, "../../../scripts"),
+];
 const PREVIEW_LIMIT = 240;
 const preview = (value: string | null | undefined) =>
   (value ?? "").replace(/\s+/g, " ").trim().slice(0, PREVIEW_LIMIT);
 const safeFilename = (value: string) => value.replace(/[\\/:*?"<>|]/g, "_");
+const resolveScriptsRoot = () => {
+  for (const candidate of scriptRootCandidates) {
+    if (existsSync(resolve(candidate, "extract_notice.py"))) {
+      return candidate;
+    }
+  }
+
+  return scriptRootCandidates[0];
+};
 
 const upsertDocument = (
   app: FastifyInstance,
@@ -49,7 +62,7 @@ export const processDocumentsJob = async (app: FastifyInstance) => {
     take: 20,
   });
 
-  const scriptsRoot = resolve(apiRoot, "scripts");
+  const scriptsRoot = resolveScriptsRoot();
   const extractScript = resolve(scriptsRoot, "extract_notice.py");
   const scriptMtime = statSync(extractScript).mtime.toISOString();
 
@@ -57,6 +70,8 @@ export const processDocumentsJob = async (app: FastifyInstance) => {
     {
       marker: EXTRACTOR_MARKER,
       sourceFingerprint: EXTRACTOR_SOURCE_FINGERPRINT,
+      moduleDir,
+      scriptRootCandidates,
       scriptsRoot,
       extractScript,
       scriptMtime,
