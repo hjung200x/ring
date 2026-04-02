@@ -4,9 +4,9 @@ import type { SessionUserDto, SmsRecipientCreateInput, SmsRecipientDto, UserSche
 import { apiFetch } from "../lib/api-client.js";
 
 const ranges: Record<UserScheduleUnit, { min: number; max: number; help: string }> = {
-  week: { min: 1, max: 7, help: "\u0031\uC8FC\uC5D0 \uBA87 \uD68C \uC2E4\uD589\uD560\uC9C0 \uC124\uC815\uD569\uB2C8\uB2E4." },
-  day: { min: 1, max: 12, help: "\u0031\uC77C\uC5D0 \uBA87 \uD68C \uC2E4\uD589\uD560\uC9C0 \uC124\uC815\uD569\uB2C8\uB2E4." },
-  hour: { min: 1, max: 24, help: "\uBA87 \uC2DC\uAC04\uB9C8\uB2E4 \uC2E4\uD589\uD560\uC9C0 \uC124\uC815\uD569\uB2C8\uB2E4." },
+  week: { min: 1, max: 7, help: "\u0031\uC8FC\uC5D0 \uBA87 \uD68C \uC2E4\uD589\uD560\uC9C0 \uC124\uC815\uD569\uB2C8\uB2E4. \uBAA8\uB4E0 \uC2E4\uD589\uC740 \uC624\uD6C4 4\uC2DC\uC5D0 \uC9C4\uD589\uB429\uB2C8\uB2E4." },
+  day: { min: 1, max: 30, help: "\uBA87 \uC77C\uB9C8\uB2E4 \uC2E4\uD589\uD560\uC9C0 \uC124\uC815\uD569\uB2C8\uB2E4. \uBAA8\uB4E0 \uC2E4\uD589\uC740 \uC624\uD6C4 4\uC2DC\uC5D0 \uC9C4\uD589\uB429\uB2C8\uB2E4." },
+  hour: { min: 1, max: 24, help: "\uAE30\uC874 \uC2A4\uCF00\uC904 \uD638\uD658\uC6A9 \uAC12\uC785\uB2C8\uB2E4." },
 };
 
 type RecipientDraft = {
@@ -77,6 +77,14 @@ export const SchedulePage = () => {
     }
     setScheduleEnabled(sessionQuery.data.schedule.scheduleEnabled);
     setSmsEnabled(sessionQuery.data.schedule.smsEnabled);
+    if (sessionQuery.data.schedule.scheduleUnit === "hour") {
+      setScheduleUnit("day");
+      setScheduleValue("1");
+      setStatus(
+        "\uAE30\uC874 \uC2DC\uAC04 \uAE30\uC900 \uC2A4\uCF00\uC904\uC740 \uC0C8 \uD654\uBA74\uC5D0\uC11C \uC77C \uAE30\uC900\uC73C\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uB2E4\uC2DC \uC800\uC7A5\uD558\uBA74 \uC624\uD6C4 4\uC2DC \uAE30\uC900 \uC2A4\uCF00\uC904\uB85C \uC804\uD658\uB429\uB2C8\uB2E4.",
+      );
+      return;
+    }
     setScheduleUnit(sessionQuery.data.schedule.scheduleUnit);
     setScheduleValue(String(sessionQuery.data.schedule.scheduleValue));
   }, [sessionQuery.data]);
@@ -258,7 +266,6 @@ export const SchedulePage = () => {
               >
                 <option value="week">{"\uC8FC"}</option>
                 <option value="day">{"\uC77C"}</option>
-                <option value="hour">{"\uC2DC\uAC04"}</option>
               </select>
             </label>
             <label className="settings-field">
@@ -274,6 +281,7 @@ export const SchedulePage = () => {
                 disabled={!scheduleEnabled}
               />
               <small>{activeRange.help}</small>
+              <small>{"\uAE30\uC900 \uC2E4\uD589 \uC2DC\uAC01: \uC624\uD6C4 4:00"}</small>
               <small>{`${activeRange.min} ~ ${activeRange.max}`}</small>
             </label>
           </div>
