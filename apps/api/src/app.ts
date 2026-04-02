@@ -3,8 +3,10 @@ import { dirname, resolve } from "node:path";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify from "fastify";
+import { SolapiMessageService } from "solapi";
 import { adminUserPasswordSchema, scheduleUpdateSchema } from "@ring/schemas";
 import type { SessionUserDto } from "@ring/types";
+import { z } from "zod";
 import { hashPassword } from "./modules/auth/password.js";
 import { envSchema } from "./config/env.js";
 import { getSharedOwnerId } from "./lib/shared-scope.js";
@@ -138,6 +140,82 @@ export const buildApp = async () => {
     await app.prisma.authSession.deleteMany({ where: { userId: request.currentUser!.id } });
     app.clearSessionCookie(reply);
     return reply.status(204).send();
+  });
+
+  const adminSmsTestSchema = z.object({
+    to: z.string().min(1).optional(),
+    text: z.string().min(1).max(2000).optional(),
+  });
+
+  app.post("/api/admin/test-sms", { preHandler: app.requireSession }, async (request) => {
+    if (request.currentUser!.username !== app.config.ADMIN_USERNAME) {
+      throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
+    }
+
+    const payload = adminSmsTestSchema.parse(request.body ?? {});
+    const apiKey = app.config.SOLAPI_API_KEY;
+    const apiSecret = app.config.SOLAPI_API_SECRET;
+    const from = app.config.SOLAPI_SENDER?.replace(/[^0-9]/g, "");
+    const to = (payload.to ?? app.config.SOLAPI_RECIPIENT)?.replace(/[^0-9]/g, "");
+
+    if (!apiKey || !apiSecret || !from || !to) {
+      throw Object.assign(
+        new Error("SOLAPI_API_KEY, SOLAPI_API_SECRET, SOLAPI_SENDER, SOLAPI_RECIPIENT are required."),
+        { statusCode: 400 }
+      );
+    }
+
+    const text =
+      payload.text ??
+      `RING 테스트 문자입니다. ${new Date().toISOString()}`;
+
+    app.log.info(
+      { actor: request.currentUser!.username, from, to, textLength: text.length },
+      "solapi.sms.test.requested"
+    );
+
+    try {
+      const service = new SolapiMessageService(apiKey, apiSecret);
+      const result = await service.sendOne({
+        to,
+        from,
+        text,
+        type: "SMS",
+      });
+
+      app.log.info(
+        {
+          actor: request.currentUser!.username,
+          from,
+          to,
+          messageId: result.messageId,
+          groupId: result.groupId,
+          statusCode: result.statusCode,
+        },
+        "solapi.sms.test.succeeded"
+      );
+
+      return {
+        ok: true,
+        to,
+        from,
+        messageId: result.messageId,
+        groupId: result.groupId,
+        statusCode: result.statusCode,
+      };
+    } catch (error) {
+      app.log.error(
+        {
+          actor: request.currentUser!.username,
+          from,
+          to,
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+        "solapi.sms.test.failed"
+      );
+      throw Object.assign(new Error("SMS test send failed"), { statusCode: 502 });
+    }
   });
 
   return app;
