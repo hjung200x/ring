@@ -10,7 +10,8 @@ import { extractNotice } from "../documents/extractor-bridge.js";
 import { normalizeNoticeText } from "../documents/normalizer.js";
 import { buildRuleBasedSummary } from "../documents/summarizer.js";
 
-const EXTRACTOR_MARKER = "ring-extractor-bodytext-hwp-v2";
+const EXTRACTOR_MARKER = "ring-extractor-bodytext-hwp-v3";
+const EXTRACTOR_SOURCE_FINGERPRINT = "ring-source-2026-04-02-a";
 const apiRoot = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const PREVIEW_LIMIT = 240;
 const preview = (value: string | null | undefined) =>
@@ -55,6 +56,8 @@ export const processDocumentsJob = async (app: FastifyInstance) => {
   app.log.info(
     {
       marker: EXTRACTOR_MARKER,
+      sourceFingerprint: EXTRACTOR_SOURCE_FINGERPRINT,
+      scriptsRoot,
       extractScript,
       scriptMtime,
       attachmentCount: attachments.length,
