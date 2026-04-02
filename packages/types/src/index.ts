@@ -11,12 +11,14 @@ export interface InterestProfileInput {
 
 export interface UserScheduleInput {
   scheduleEnabled: boolean;
+  smsEnabled: boolean;
   scheduleUnit: UserScheduleUnit;
   scheduleValue: number;
 }
 
 export interface UserScheduleDto {
   scheduleEnabled: boolean;
+  smsEnabled: boolean;
   scheduleUnit: UserScheduleUnit;
   scheduleValue: number;
   lastRunAt: string | null;

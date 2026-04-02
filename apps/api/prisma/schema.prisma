@@ -17,6 +17,7 @@ model User {
   kakaoTarget    String?
   isActive       Boolean           @default(true)
   scheduleEnabled Boolean          @default(true)
+  smsEnabled     Boolean           @default(true)
   scheduleUnit   String            @default("day")
   scheduleValue  Int               @default(1)
   lastRunAt      DateTime?

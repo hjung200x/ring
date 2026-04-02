@@ -80,7 +80,14 @@ export const buildApp = async () => {
     const sharedOwnerId = await getSharedOwnerId(app);
     const sharedOwner = await app.prisma.user.findUniqueOrThrow({
       where: { id: sharedOwnerId },
-      select: { scheduleEnabled: true, scheduleUnit: true, scheduleValue: true, lastRunAt: true, nextRunAt: true },
+      select: {
+        scheduleEnabled: true,
+        smsEnabled: true,
+        scheduleUnit: true,
+        scheduleValue: true,
+        lastRunAt: true,
+        nextRunAt: true,
+      },
     });
 
     const resolvedUsername = user.username ?? user.email;
@@ -92,6 +99,7 @@ export const buildApp = async () => {
       isAdmin: resolvedUsername === app.config.ADMIN_USERNAME,
       schedule: {
         scheduleEnabled: sharedOwner.scheduleEnabled,
+        smsEnabled: sharedOwner.smsEnabled,
         scheduleUnit: sharedOwner.scheduleUnit as "week" | "day" | "hour",
         scheduleValue: sharedOwner.scheduleValue,
         lastRunAt: sharedOwner.lastRunAt?.toISOString() ?? null,
@@ -111,6 +119,7 @@ export const buildApp = async () => {
         userId: request.currentUser!.id,
         sharedOwnerId,
         scheduleEnabled: payload.scheduleEnabled,
+        smsEnabled: payload.smsEnabled,
         scheduleUnit: payload.scheduleUnit,
         scheduleValue: payload.scheduleValue,
       },
@@ -120,6 +129,7 @@ export const buildApp = async () => {
       where: { id: sharedOwnerId },
       data: {
         scheduleEnabled: payload.scheduleEnabled,
+        smsEnabled: payload.smsEnabled,
         scheduleUnit: payload.scheduleUnit,
         scheduleValue: payload.scheduleValue,
         nextRunAt: payload.scheduleEnabled ? new Date() : null,

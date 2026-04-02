@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { SolapiMessageService } from "solapi";
+import { getSharedOwnerId } from "../../lib/shared-scope.js";
 
 const SMS_MESSAGE_PREFIX = "\uAC80\uC0C9 \uC870\uAC74\uC5D0 \uB9DE\uB294 \uACF5\uACE0\uBB38 ";
 const SMS_MESSAGE_SUFFIX = "\uAC74\uC744 \uCC3E\uC558\uC2B5\uB2C8\uB2E4.";
@@ -23,6 +24,17 @@ export class SmsService {
   }
 
   async dispatchBatch(batchKey: string, notificationCount: number) {
+    const sharedOwnerId = await getSharedOwnerId(this.app);
+    const sharedOwner = await this.app.prisma.user.findUnique({
+      where: { id: sharedOwnerId },
+      select: { smsEnabled: true },
+    });
+
+    if (!sharedOwner?.smsEnabled) {
+      this.app.log.info({ batchKey }, "sms.batch.skipped.disabled");
+      return;
+    }
+
     const recipients = await this.app.prisma.smsRecipient.findMany({
       where: { enabled: true },
       orderBy: { createdAt: "asc" },

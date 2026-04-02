@@ -45,15 +45,15 @@ const recipientDraftFromDto = (recipient: SmsRecipientDto): RecipientDraft => ({
 export const SchedulePage = () => {
   const queryClient = useQueryClient();
   const [scheduleEnabled, setScheduleEnabled] = useState(true);
+  const [smsEnabled, setSmsEnabled] = useState(true);
   const [scheduleUnit, setScheduleUnit] = useState<UserScheduleUnit>("day");
   const [scheduleValue, setScheduleValue] = useState("1");
   const [status, setStatus] = useState("");
   const [recipientStatus, setRecipientStatus] = useState("");
   const [recipientDrafts, setRecipientDrafts] = useState<Record<string, RecipientDraft>>({});
-  const [newRecipient, setNewRecipient] = useState<SmsRecipientCreateInput>({
+  const [newRecipient, setNewRecipient] = useState<Pick<SmsRecipientCreateInput, "name" | "phoneNumber">>({
     name: "",
     phoneNumber: "",
-    enabled: true,
   });
 
   const sessionQuery = useQuery({
@@ -76,6 +76,7 @@ export const SchedulePage = () => {
       return;
     }
     setScheduleEnabled(sessionQuery.data.schedule.scheduleEnabled);
+    setSmsEnabled(sessionQuery.data.schedule.smsEnabled);
     setScheduleUnit(sessionQuery.data.schedule.scheduleUnit);
     setScheduleValue(String(sessionQuery.data.schedule.scheduleValue));
   }, [sessionQuery.data]);
@@ -121,6 +122,7 @@ export const SchedulePage = () => {
         method: "PATCH",
         body: JSON.stringify({
           scheduleEnabled,
+          smsEnabled,
           scheduleUnit,
           scheduleValue: Number(scheduleValue),
         }),
@@ -151,7 +153,7 @@ export const SchedulePage = () => {
       }),
     onSuccess: async () => {
       setRecipientStatus("\uBB38\uC790 \uC218\uC2E0\uC790\uB97C \uCD94\uAC00\uD588\uC2B5\uB2C8\uB2E4.");
-      setNewRecipient({ name: "", phoneNumber: "", enabled: true });
+      setNewRecipient({ name: "", phoneNumber: "" });
       await refreshRecipients();
     },
     onError: (error) => {
@@ -233,6 +235,17 @@ export const SchedulePage = () => {
               checked={scheduleEnabled}
               onChange={(event) => setScheduleEnabled(event.target.checked)}
             />
+          </label>
+          <label className="schedule-toggle-row">
+            <span className="schedule-toggle-copy">
+              <strong>{"\uBB38\uC790 \uBC1C\uC1A1 \uD65C\uC131\uD654"}</strong>
+              <small>
+                {
+                  "\uBE44\uD65C\uC131\uD654\uD558\uBA74 \uC0C8 \uACF5\uACE0\uC54C\uB9BC\uC774 \uC0DD\uACA8\uB3C4 \uBB38\uC790\uB294 \uBCF4\uB0B4\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+                }
+              </small>
+            </span>
+            <input type="checkbox" checked={smsEnabled} onChange={(event) => setSmsEnabled(event.target.checked)} />
           </label>
           <div className="schedule-grid">
             <label className="settings-field">
@@ -416,19 +429,6 @@ export const SchedulePage = () => {
                 <small>{formatPhoneNumber(newRecipient.phoneNumber)}</small>
               </label>
             </div>
-            <label className="settings-checkbox sms-recipient-create-toggle">
-              <input
-                type="checkbox"
-                checked={newRecipient.enabled}
-                onChange={(event) =>
-                  setNewRecipient((current) => ({
-                    ...current,
-                    enabled: event.target.checked,
-                  }))
-                }
-              />
-              <span>{"\uC8FC\uAE30\uC801 \uACF5\uACE0\uC54C\uB9BC \uBB38\uC790 \uC218\uC2E0"}</span>
-            </label>
             <button
               type="button"
               className="panel-button"
@@ -436,6 +436,7 @@ export const SchedulePage = () => {
                 createRecipientMutation.mutate({
                   ...newRecipient,
                   phoneNumber: normalizePhoneNumber(newRecipient.phoneNumber),
+                  enabled: true,
                 })
               }
               disabled={!canCreateRecipient}
