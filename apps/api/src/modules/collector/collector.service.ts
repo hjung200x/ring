@@ -346,18 +346,6 @@ export class CollectorService {
       },
       "collector.attachments.discovered",
     );
-
-    this.app.log.info(
-      {
-        title: detail.title || fallbackTitle,
-        attachments: detail.attachments.map((item) => ({
-          filename: item.filename,
-          atchDocId: item.atchDocId,
-          atchFileId: item.atchFileId,
-        })),
-      },
-      "collector.attachments.discovered",
-    );
     const primary = selectPrimaryNoticeAttachment(detail.attachments);
     if (!primary) {
       return {
@@ -424,31 +412,10 @@ export class CollectorService {
         },
         "collector.attachment.downloaded",
       );
-      this.app.log.info(
-        {
-          title: detail.title || fallbackTitle,
-          selectedFilename: primary.filename,
-          atchDocId: primary.atchDocId,
-          atchFileId: primary.atchFileId,
-          byteLength: buffer.length,
-          sha1: createHash("sha1").update(buffer).digest("hex"),
-          localPath,
-        },
-        "collector.attachment.downloaded",
-      );
 
-      const scriptsRoot = resolve(process.cwd(), "scripts");
+      const scriptsRoot = resolve(process.cwd(), "apps/api/scripts");
       const extractScript = resolve(scriptsRoot, "extract_notice.py");
       const extracted = await extractNotice(extractScript, localPath, extension);
-      this.app.log.info(
-        {
-          title: detail.title || fallbackTitle,
-          selectedFilename: primary.filename,
-          rawTextPreview: preview(extracted.rawText),
-          summaryPreview: preview(extracted.summaryText),
-        },
-        "collector.attachment.extracted",
-      );
       this.app.log.info(
         {
           title: detail.title || fallbackTitle,
@@ -469,15 +436,6 @@ export class CollectorService {
       });
       const summaryText = extractedSummary || fallbackSummary;
 
-      this.app.log.info(
-        {
-          title: detail.title || fallbackTitle,
-          selectedFilename: primary.filename,
-          normalizedPreview: preview(normalizedText),
-          finalSummaryPreview: preview(summaryText),
-        },
-        "collector.attachment.finalized",
-      );
       this.app.log.info(
         {
           title: detail.title || fallbackTitle,
