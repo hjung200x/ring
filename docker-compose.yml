@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile.api
     env_file:
-      - ./deploy/ring.docker.env.example
+      - ./deploy/ring.docker.env
     environment:
       DATABASE_URL: file:/app/apps/api/prisma/dev.db
       STORAGE_ROOT: /app/apps/api/storage
@@ -12,7 +12,7 @@ services:
       PORT: 3000
       NODE_ENV: production
     volumes:
-      - ./apps/api/prisma:/app/apps/api/prisma
+      - ./data/dev.db:/app/apps/api/prisma/dev.db
       - ./apps/api/storage:/app/apps/api/storage
       - ./log:/app/log
     restart: unless-stopped
