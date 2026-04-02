@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { InterestProfileInput } from "@ring/types";
 
-const MAX_DEFAULT_THRESHOLD = 0.7;
+const MAX_DEFAULT_THRESHOLD = 0.6;
 const normalizeThreshold = (value: number) => Math.min(value, MAX_DEFAULT_THRESHOLD);
 const withNormalizedThreshold = <T extends { similarityThreshold: number }>(profile: T): T => ({
   ...profile,

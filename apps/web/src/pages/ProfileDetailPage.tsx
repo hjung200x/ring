@@ -13,7 +13,7 @@ interface ProfileDetail {
   enabled: boolean;
 }
 
-const DEFAULT_THRESHOLD = '0.70';
+const DEFAULT_THRESHOLD = '0.60';
 
 const toKeywordText = (items: string[]) => items.join(', ');
 const toKeywords = (value: string) =>
