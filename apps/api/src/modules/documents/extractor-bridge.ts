@@ -7,7 +7,7 @@ export const extractNotice = async (
   extension: "hwp" | "hwpx",
 ): Promise<NoticeExtractionResult> =>
   await new Promise((resolve, reject) => {
-    const child = spawn("python", [scriptPath, "--input", filePath, "--type", extension], {
+    const child = spawn("python3", [scriptPath, "--input", filePath, "--type", extension], {
       stdio: ["ignore", "pipe", "pipe"],
     });
 
