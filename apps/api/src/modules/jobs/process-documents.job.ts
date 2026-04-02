@@ -10,26 +10,13 @@ import { extractNotice } from "../documents/extractor-bridge.js";
 import { normalizeNoticeText } from "../documents/normalizer.js";
 import { buildRuleBasedSummary } from "../documents/summarizer.js";
 
-const EXTRACTOR_MARKER = "ring-extractor-bodytext-hwp-v4";
-const EXTRACTOR_SOURCE_FINGERPRINT = "ring-source-2026-04-02-b";
+const EXTRACTOR_MARKER = "ring-extractor-bodytext-hwp-v5";
+const EXTRACTOR_SOURCE_FINGERPRINT = "ring-source-2026-04-02-c";
 const moduleDir = fileURLToPath(new URL(".", import.meta.url));
-const scriptRootCandidates = [
-  resolve(moduleDir, "../../../../../scripts"),
-  resolve(moduleDir, "../../../scripts"),
-];
 const PREVIEW_LIMIT = 240;
 const preview = (value: string | null | undefined) =>
   (value ?? "").replace(/\s+/g, " ").trim().slice(0, PREVIEW_LIMIT);
 const safeFilename = (value: string) => value.replace(/[\\/:*?"<>|]/g, "_");
-const resolveScriptsRoot = () => {
-  for (const candidate of scriptRootCandidates) {
-    if (existsSync(resolve(candidate, "extract_notice.py"))) {
-      return candidate;
-    }
-  }
-
-  return scriptRootCandidates[0];
-};
 
 const upsertDocument = (
   app: FastifyInstance,
@@ -62,18 +49,38 @@ export const processDocumentsJob = async (app: FastifyInstance) => {
     take: 20,
   });
 
-  const scriptsRoot = resolveScriptsRoot();
+  const cwd = process.cwd();
+  const scriptsRoot = resolve(cwd, "apps/api/scripts");
   const extractScript = resolve(scriptsRoot, "extract_notice.py");
+  const extractScriptExists = existsSync(extractScript);
+
+  if (!extractScriptExists) {
+    app.log.error(
+      {
+        marker: EXTRACTOR_MARKER,
+        sourceFingerprint: EXTRACTOR_SOURCE_FINGERPRINT,
+        cwd,
+        moduleDir,
+        scriptsRoot,
+        extractScript,
+        extractScriptExists,
+      },
+      "process-documents.extractor.missing",
+    );
+    throw new Error(`extractor script not found at ${extractScript}`);
+  }
+
   const scriptMtime = statSync(extractScript).mtime.toISOString();
 
   app.log.info(
     {
       marker: EXTRACTOR_MARKER,
       sourceFingerprint: EXTRACTOR_SOURCE_FINGERPRINT,
+      cwd,
       moduleDir,
-      scriptRootCandidates,
       scriptsRoot,
       extractScript,
+      extractScriptExists,
       scriptMtime,
       attachmentCount: attachments.length,
     },

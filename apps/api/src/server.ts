@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import { buildApp } from "./app.js";
 import { registerHourlyJobs } from "./lib/scheduled-jobs.js";
 
-const BACKEND_BOOT_MARKER = "ring-backend-bodytext-hwp-v4";
-const SOURCE_FINGERPRINT = "ring-source-2026-04-02-b";
+const BACKEND_BOOT_MARKER = "ring-backend-bodytext-hwp-v5";
+const SOURCE_FINGERPRINT = "ring-source-2026-04-02-c";
 const serverModulePath = fileURLToPath(import.meta.url);
 const serverModuleMtime = statSync(serverModulePath).mtime.toISOString();
 const apiRoot = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
